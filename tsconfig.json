@@ -1,19 +1,25 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "useDefineForClassFields": true,
-    "module": "ESNext",
-    "lib": ["ESNext", "DOM"],
+    "target": "ES6",                  /* Specify ECMAScript target version */
+    "module": "ES6",                  /* 'none', 'commonjs', 'amd', 'system', etc */
+    "useDefineForClassFields": true,  /* Flag switches to the upcoming ECMA runtime behavior */
     "moduleResolution": "Node",
-    "strict": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "esModuleInterop": true,
-    "noEmit": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "skipLibCheck": true
+    "lib": ["ES6", "DOM"],            /* Default set of type definitions for known JS APIs */
+
+    "strict": true,                   /* Enables a wide range of type checking behavior that results in stronger
+                                        guarantees of program correctness. Turning this on is equivalent to enabling
+                                        all of the strict mode family options */
+    "resolveJsonModule": true,        /* Allows importing modules with a ‘.json’ extension,
+                                        which is a common practice in node projects */
+    "isolatedModules": true,          /* Tells TypeScript to warn you if you write certain code
+                                        that can’t be correctly interpreted by a single-file
+                                        transpilation process */
+    "esModuleInterop": true,          /* Enables interop between CommonJS and ES */
+    "noUnusedLocals": true,           /* Report errors on unused local variables */
+    "noUnusedParameters": true,       /* Report errors on unused parameters in functions */
+    "noImplicitReturns": true,        /* Check all code paths in a function to ensure they return a value */
+    "skipLibCheck": false,            /* Don't skip type checking of declaration files. We are pedantic. */
+    "allowUnreachableCode": false     /* Raises compiler errors about unreachable code */
   },
   "include": ["src"]
 }
