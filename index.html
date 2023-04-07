@@ -6,8 +6,97 @@
     <link rel="shortcut icon" href="#">
     <link rel="stylesheet" href="style.css">
     <title>Selector example</title>
+    <style>
+        .selectables-root {
+          display: flex;
+          flex-direction: row;
+          flex-wrap: nowrap;
+          user-select: none;
+        }
+        .column {
+          display: flex;
+          flex-direction: column;
+        }
+        .selectable {
+          display: inline-block;
+          background: lightblue;
+          margin: 3px;
+        }
+        .selectable.tiny {
+          width: 15px;
+          height: 15px;
+        }
+        .selectable.small {
+          width: 30px;
+          height: 30px;
+        }
+        .selectable.regular {
+          width: 50px;
+          height: 50px;
+        }
+        .selectable.big {
+          width: 75px;
+          height: 75px;
+        }
+    </style>
   </head>
-  <body>
-    <div id="app"></div>
+  <body onload="onLoad()">
+    <div class="selectables-root"></div>
+    <script>
+const margin = 3;
+
+const sizeClasses = [
+    {
+        name: "tiny",
+        size: 15
+    },
+    {
+        name: "small",
+        size: 30
+    },
+    {
+        name:  "regular",
+        size: 50
+    },
+    {
+        name: "big",
+        size: 75
+    }
+];
+
+function generateRandomElements(parent, columns, height) {
+    for (let i = 0; i < columns; i++) {
+        parent.appendChild(generateColumn(height));
+    };
+}
+
+function generateColumn(height) {
+    const column = document.createElement("div");
+    column.className = "column";
+
+    generateColumnElements(column, height);
+
+    return column;
+}
+
+function generateColumnElements(column, height) {
+    let calculatedHeight = - margin;
+    while (calculatedHeight < height) {
+        const element = document.createElement("div");
+        const index = Math.floor(Math.random() * sizeClasses.length);
+
+        element.className = "selectable " + sizeClasses[index].name;
+        column.appendChild(element);
+
+        calculatedHeight += margin + sizeClasses[index].size;
+    };
+}
+
+function onLoad() {
+    const selectablesRootQuery = "div.selectables-root";
+    let selectablesRoot = document.querySelector(selectablesRootQuery);
+    generateRandomElements(selectablesRoot, 10, 600);
+}
+    </script>
   </body>
 </html>
