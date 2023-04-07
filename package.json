@@ -1,0 +1,36 @@
+{
+  "name": "@vitoni/selector",
+  "description": "A tiny DIV based selector supporting mouse and touch written in TypeScript",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "selection",
+    "dom",
+    "mouse-events",
+    "touch-evetns",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ViToni/selector.git"
+  },
+  "author": {
+    "name": "Victor Toni",
+    "email": "victor.toni@gmail.com"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ViToni/selector/issues"
+  },
+  "homepage": "https://github.com/ViToni/selector#readme",
+  "devDependencies": {
+    "typescript": "^4.9.3",
+    "vite": "^4.2.0"
+  }
+}
