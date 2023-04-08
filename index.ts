@@ -60,7 +60,12 @@ function onLoad() {
     const selectablesRoot = document.querySelector(selectablesRootQuery) as HTMLElement;
     generateRandomElements(selectablesRoot, 10, 600);
 
-    const selector = new Selector();
+    const selectableElementsQuery = "div.selectables-root div.selectable";
+
+    const selector = new Selector(
+        selectableElementsQuery
+    );
+
     selector.mount();
 }
 

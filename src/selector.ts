@@ -1,11 +1,16 @@
 /**
- * Default values.
+ * Default values for CSS class names.
  */
 export const DEFAULTS = {
     /**
      * Class used to style the selector <div>.
      */
-    SELECTOR_CLASS: "selector-rect"
+    SELECTOR_CLASS: "selector-rect",
+
+    /**
+     * Class used to style elements while being selected.
+     */
+    MARK_SELECTED_CLASS: "mark_selected"
 };
 
 //==============================================================================
@@ -24,7 +29,8 @@ type SelectionRectangle = {
 
 interface OptionalParameters {
     selectorUUID: string,
-    selectorClass: string
+    selectorClass: string,
+    markSelectedClass: string
 }
 
 //==============================================================================
@@ -47,6 +53,16 @@ export class Selector {
      * Query to "find" the selection DIV
      */
     private readonly selectorRectQuery: string;
+
+    /**
+     * Query identifying all selectable elements.
+     */
+    private readonly selectableElementsQuery: string;
+
+    /**
+     * CSS class to mark elements during selection.
+     */
+    private readonly markSelectedClass: string;
 
     /**
      * Flag to indicated whether the DIV has been created
@@ -81,11 +97,13 @@ export class Selector {
     //==============================================================================
 
     public constructor(
+        selectableElementsQuery: string,
         options?: Partial<OptionalParameters>
     ) {
         const defaultOptions: OptionalParameters = {
             selectorUUID: htmlRandomUUID(),
-            selectorClass: DEFAULTS.SELECTOR_CLASS
+            selectorClass: DEFAULTS.SELECTOR_CLASS,
+            markSelectedClass: DEFAULTS.MARK_SELECTED_CLASS
         };
 
         const optionsWithDefaultValues: OptionalParameters = {
@@ -99,10 +117,18 @@ export class Selector {
         // setup query by which we get the the selection <div>
         this.selectorRectQuery = "div#" + this.selectorUUID;
 
+        this.selectableElementsQuery = selectableElementsQuery;
+
+        this.markSelectedClass = optionsWithDefaultValues.markSelectedClass;
+
         // need to do some binding to get "this" right within the event handlers
         this.onMouseDown = this.onMouseDown.bind(this);
         this.onMouseMove = this.onMouseMove.bind(this);
         this.onMouseUp = this.onMouseUp.bind(this);
+
+        this.isSelectedBySelectionRectangle = this.isSelectedBySelectionRectangle.bind(this);
+        this.unmarkSelected = this.unmarkSelected.bind(this);
+        this.markSelected = this.markSelected.bind(this);
     }
 
     //==============================================================================
@@ -169,6 +195,8 @@ export class Selector {
 
         this.computeSelectionRectangle(event);
         this.showSelectionRectangle();
+
+        this.markSelectedElements();
     }
 
     /**
@@ -182,6 +210,8 @@ export class Selector {
 
             this.hideSelectionRectangle();
             this.resetSelectionRectangle();
+
+            this.unmarkSelectedElements();
         }
     }
 
@@ -232,6 +262,30 @@ export class Selector {
      */
     private getSelectionRectNode(): HTMLElement {
         return document.querySelector(this.selectorRectQuery) as HTMLElement;
+    }
+
+    /**
+     * All elements which can be selected.
+     */
+    private getSelectableElements(): HTMLElement[] {
+        const selectableElements: HTMLElement[] = [];
+        document
+            .querySelectorAll(this.selectableElementsQuery)
+            .forEach((element) => selectableElements.push(element as HTMLElement));
+
+        return selectableElements;
+    }
+
+    //==============================================================================
+
+    /**
+     * All elements selected by the selection area.
+     */
+    private getSelectedElements(): HTMLElement[] {
+        const selectedElements = this.getSelectableElements()
+            .filter(this.isSelectedBySelectionRectangle);
+
+        return selectedElements;
     }
 
     //==============================================================================
@@ -296,6 +350,84 @@ export class Selector {
         this.getSelectionRectNode()?.remove();
     }
 
+    //==============================================================================
+
+    /**
+     * Marks all selected elements by adding the mark class to them.
+     */
+    private markSelectedElements() {
+        this.unmarkSelectedElements();
+        this.getSelectedElements().forEach(this.markSelected);
+    }
+
+    /**
+     * Marks the given element as selected by adding the mark class to it.
+     */
+    private markSelected(element: HTMLElement) {
+        element.classList.add(this.markSelectedClass);
+    }
+
+    /**
+     * Removes the mark class from all selectable elements.
+     */
+    private unmarkSelectedElements() {
+        this.getSelectableElements().forEach(this.unmarkSelected);
+    }
+
+    /**
+     * Removes the mark class from the given element.
+     */
+    private unmarkSelected(element: HTMLElement) {
+        element.classList.remove(this.markSelectedClass);
+    }
+
+    //==============================================================================
+
+    /**
+     * Checks if a given element is selected by the selection area.
+     *
+     * @param element - to be checked
+     */
+    private isSelectedBySelectionRectangle(element: HTMLElement): boolean {
+        const elementRect = element.getBoundingClientRect();
+
+        return doOverlap(this.selectionRectangle, elementRect);
+    }
+
+}
+
+//==============================================================================
+
+/**
+ * Checks if the selection area overlaps any part of the rect of given element.
+ *
+ * @param selectionRect - the rect of the selection area
+ * @param elementRect - the rect of the element to be tested
+ * @returns true if selectionRect overlaps any part of the elementRect, false otherwise
+ */
+function doOverlap(selectionRect: SelectionRectangle, elementRect: DOMRect): boolean {
+    // if rectangle has area 0, no overlap
+    if (
+        selectionRect.right == selectionRect.left ||
+        selectionRect.top == selectionRect.bottom ||
+        elementRect.right == elementRect.left ||
+        elementRect.top == elementRect.bottom
+    ) {
+        return false;
+    }
+
+    // If one rectangle is on left side of other
+    if (elementRect.right < selectionRect.left || selectionRect.right < elementRect.left) {
+        return false;
+    }
+
+    // If one rectangle is above other
+    // (Y increases going from top => bottom as the positive y-axis goes down)
+    if (selectionRect.bottom < elementRect.top || elementRect.bottom < selectionRect.top) {
+        return false;
+    }
+
+    return true;
 }
 
 //==============================================================================
