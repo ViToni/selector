@@ -1,11 +1,16 @@
 /**
- * Default values.
+ * Default values for CSS class names.
  */
 export const DEFAULTS = {
     /**
      * Class used to style the selector <div>.
      */
-    SELECTOR_CLASS: "selector-rect"
+    SELECTOR_CLASS: "selector-rect",
+
+    /**
+     * Class used to style elements while being selected.
+     */
+    MARK_SELECTED_CLASS: "mark_selected"
 };
 
 //==============================================================================
@@ -24,7 +29,8 @@ type Rectangle = {
 
 interface OptionalParameters {
     selectorUUID: string,
-    selectorClass: string
+    selectorClass: string,
+    markSelectedClass: string
 }
 
 //==============================================================================
@@ -42,6 +48,16 @@ export class Selector {
      * Class used to style the selection DIV.
      */
     private readonly selectorClass: string;
+
+    /**
+     * Selector identifying all selectable elements.
+     */
+    private readonly selectableElementsSelector: string;
+
+    /**
+     * CSS class to mark elements during selection.
+     */
+    private readonly markSelectedClass: string;
 
     /**
      * Flag to indicate whether the selection DIV has been created
@@ -76,11 +92,13 @@ export class Selector {
     //==============================================================================
 
     public constructor(
+        selectableElementsSelector: string,
         options?: Partial<OptionalParameters>
     ) {
         const defaultOptions: OptionalParameters = {
             selectorUUID: htmlRandomUUID(),
-            selectorClass: DEFAULTS.SELECTOR_CLASS
+            selectorClass: DEFAULTS.SELECTOR_CLASS,
+            markSelectedClass: DEFAULTS.MARK_SELECTED_CLASS
         };
 
         const optionsWithDefaultValues: OptionalParameters = {
@@ -91,11 +109,20 @@ export class Selector {
         this.selectorUUID = optionsWithDefaultValues.selectorUUID;
         this.selectorClass = optionsWithDefaultValues.selectorClass;
 
+        this.selectableElementsSelector = selectableElementsSelector;
+
+        this.markSelectedClass = optionsWithDefaultValues.markSelectedClass;
+
         // need to do some binding to get "this" right when called within event handlers
 
         this.onMouseDown = this.onMouseDown.bind(this);
         this.onMouseMove = this.onMouseMove.bind(this);
         this.onMouseUp = this.onMouseUp.bind(this);
+
+        this.matchedBySelection = this.matchedBySelection.bind(this);
+
+        this.unmarkSelected = this.unmarkSelected.bind(this);
+        this.markSelected = this.markSelected.bind(this);
     }
 
     //==============================================================================
@@ -169,6 +196,8 @@ export class Selector {
 
         this.computeSelectionRectangle(event);
         this.showSelectionRectangle();
+
+        this.markSelectedElements();
     }
 
     /**
@@ -182,6 +211,8 @@ export class Selector {
 
             this.hideSelectionRectangle();
             this.resetSelectionRectangle();
+
+            this.unmarkSelectedElements();
         }
     }
 
@@ -232,6 +263,30 @@ export class Selector {
      */
     private getSelectionRectNode(): HTMLElement {
         return document.getElementById(this.selectorUUID) as HTMLElement;
+    }
+
+    /**
+     * All elements which can be selected.
+     */
+    private getSelectableElements(): HTMLElement[] {
+        const selectableElements: HTMLElement[] = [];
+        document
+            .querySelectorAll(this.selectableElementsSelector)
+            .forEach((element) => selectableElements.push(element as HTMLElement));
+
+        return selectableElements;
+    }
+
+    //==============================================================================
+
+    /**
+     * All elements selected by the selection area.
+     */
+    private getSelectedElements(): HTMLElement[] {
+        const selectedElements = this.getSelectableElements()
+            .filter(this.matchedBySelection);
+
+        return selectedElements;
     }
 
     //==============================================================================
@@ -292,6 +347,107 @@ export class Selector {
         this.getSelectionRectNode()?.remove();
     }
 
+    //==============================================================================
+
+    /**
+     * Marks all selected elements by adding the mark class to them.
+     */
+    private markSelectedElements() {
+        this.unmarkSelectedElements();
+        this.getSelectedElements().forEach(this.markSelected);
+    }
+
+    /**
+     * Marks the given element as selected by adding the mark class to it.
+     */
+    private markSelected(element: HTMLElement) {
+        element.classList.add(this.markSelectedClass);
+    }
+
+    /**
+     * Removes the mark class from all selectable elements.
+     */
+    private unmarkSelectedElements() {
+        this.getSelectableElements().forEach(this.unmarkSelected);
+    }
+
+    /**
+     * Removes the mark class from the given element.
+     */
+    private unmarkSelected(element: HTMLElement) {
+        element.classList.remove(this.markSelectedClass);
+    }
+
+    //==============================================================================
+
+    /**
+     * Checks if a given element is selected by the selection area.
+     *
+     * @param element - to be checked
+     */
+    private matchedBySelection(element: HTMLElement): boolean {
+        const elementRect = element.getBoundingClientRect();
+
+        return touches(this.selectionRectangle, elementRect);
+    }
+
+}
+
+//==============================================================================
+
+/**
+ * Checks if the given DOMRect has no area.
+ *
+ * @param domRect - The rect of the element to be tested
+ *
+ * @returns true if `domRect` has no width nor height, false otherwise
+ */
+function elementHasNoArea(domRect: DOMRect): boolean {
+    return (domRect.width == 0 || domRect.height == 0);
+}
+
+/**
+ * Checks if the given rectangle has no area.
+ *
+ * @param rectangle - The rectangle to be tested
+ *
+ * @returns true if `rectangle` has no width nor height, false otherwise
+ */
+function selectionHasNoArea(rectangle: Rectangle): boolean {
+    return (
+        rectangle.left == rectangle.right ||
+        rectangle.top == rectangle.bottom
+    );
+}
+
+/**
+ * Checks if the selection area touches any part of the rect of given element.
+ *
+ * @param selectionRect - The rect of the selection area
+ * @param elementRect - The rect of the element to be tested
+ * @returns true if `selectionRect` touches any part of `elementRect`, false otherwise
+ */
+function touches(selectionRect: Rectangle, elementRect: DOMRect): boolean {
+    if (selectionHasNoArea(selectionRect)) {
+        return false;
+    }
+
+    if (elementHasNoArea(elementRect)) {
+        return false;
+    }
+
+    // If one rectangle is beside the other
+    if (elementRect.right < selectionRect.left || selectionRect.right < elementRect.left) {
+        return false;
+    }
+
+    // If one rectangle is above the other
+    // (Y increases going from top => bottom as the positive y-axis goes down)
+    if (selectionRect.bottom < elementRect.top || elementRect.bottom < selectionRect.top) {
+        return false;
+    }
+
+    return true;
 }
 
 //==============================================================================
