@@ -40,8 +40,20 @@
         }
         .selector-rect {
           background-color: darkslateblue !important;
-          border: black 1px dashed;
+          background:
+            linear-gradient(90deg, #111 50%, transparent 0) repeat-x,
+            linear-gradient(90deg, #111 50%, transparent 0) repeat-x,
+            linear-gradient(0deg, #111 50%, transparent 0) repeat-y,
+            linear-gradient(0deg, #111 50%, transparent 0) repeat-y;
+          background-size: 7px 1px, 8px 1px, 1px 7px, 1px 7px;
+          background-position: 0 0, 0 100%, 0 0, 100% 0;
+          animation: linearGradientMove .4s infinite linear;
           opacity: 0.3;
+        }
+        @keyframes linearGradientMove {
+          100% {
+            background-position: 7px 0, -7px 100%, 0 -7px, 100% 7px;
+          }
         }
     </style>
   </head>
