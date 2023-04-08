@@ -86,6 +86,11 @@ export class Selector {
     private readonly selectionMode: SelectionMode;
 
     /**
+     * Callback to be executed on selected elements when selection is completed.
+     */
+    private readonly onSelectedCallback: (selectedElements: HTMLElement[]) => void;
+
+    /**
      * Flag to indicated whether the DIV has been created
      * and the event handlers have been registered.
      */
@@ -119,6 +124,7 @@ export class Selector {
 
     public constructor(
         selectableElementsQuery: string,
+        onSelectedCallback: (selectedElements: HTMLElement[]) => void,
         options?: Partial<OptionalParameters>
     ) {
         const defaultOptions: OptionalParameters = {
@@ -142,6 +148,8 @@ export class Selector {
         this.selectableElementsQuery = selectableElementsQuery;
 
         this.markSelectedClass = optionsWithDefaultValues.markSelectedClass;
+
+        this.onSelectedCallback = onSelectedCallback;
 
         this.selectionMode = optionsWithDefaultValues.selectionMode;
 
@@ -232,10 +240,15 @@ export class Selector {
         if (this.isMouseDown) {
             this.isMouseDown = false;
 
-            this.hideSelectionRectangle();
-            this.resetSelectionRectangle();
+            // fail safe since we execute a user provided function
+            try {
+                this.handleSelected();
+            } finally {
+                this.hideSelectionRectangle();
+                this.resetSelectionRectangle();
 
-            this.unmarkSelectedElements();
+                this.unmarkSelectedElements();
+            }
         }
     }
 
@@ -403,6 +416,15 @@ export class Selector {
      */
     private unmarkSelected(element: HTMLElement) {
         element.classList.remove(this.markSelectedClass);
+    }
+
+    //==============================================================================
+
+    /**
+     * Delegates the selected elements to the user provided callback.
+     */
+    private handleSelected() {
+        this.onSelectedCallback(this.getSelectedElements());
     }
 
     //==============================================================================
