@@ -1,3 +1,7 @@
+import { Selector } from "./src/selector";
+
+//==============================================================================
+
 const margin = 3;
 
 const sizeClasses = [
@@ -55,6 +59,9 @@ function onLoad() {
     const selectablesRootSelector = "div.selectables-root";
     const selectablesRoot = document.querySelector(selectablesRootSelector) as HTMLElement;
     generateRandomElements(selectablesRoot, 10, 600);
+
+    const selector = new Selector();
+    selector.mount();
 }
 
 //==============================================================================

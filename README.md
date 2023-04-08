@@ -2,6 +2,22 @@
 
 A tiny DIV based selector supporting mouse and touch written in TypeScript.
 
+## Using selector
+
+```typescript
+    import { Selector } from "@vitoni/selector";
+
+    const selector = new Selector();
+    ...
+    selector.mount();
+    ...
+    // cleanup only needed for SPA
+    selector.unmount();
+```
+
+* `mount()` registers event listeners and adds a `<div>` element to DOM to visualize the selection area.
+* `unmount()` deregisters event listeners and removes the selection area `<div>` element from DOM.
+
 ## Getting started with development
 
 ### Install dependencies
