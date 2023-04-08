@@ -13,6 +13,21 @@ export const DEFAULTS = {
     MARK_SELECTED_CLASS: "mark_selected"
 };
 
+/**
+ * How should elements be selected.
+ */
+export enum SelectionMode {
+    /**
+     * The selection area just needs to touch part of the element.
+     */
+    PARTIAL_COVER,
+
+    /**
+     * The selection area needs to cover the whole element.
+     */
+    FULL_COVER
+}
+
 //==============================================================================
 
 type Point = {
@@ -30,7 +45,8 @@ type SelectionRectangle = {
 interface OptionalParameters {
     selectorUUID: string,
     selectorClass: string,
-    markSelectedClass: string
+    markSelectedClass: string,
+    selectionMode: SelectionMode
 }
 
 //==============================================================================
@@ -63,6 +79,11 @@ export class Selector {
      * CSS class to mark elements during selection.
      */
     private readonly markSelectedClass: string;
+
+    /**
+     * How should the elements get selected.
+     */
+    private readonly selectionMode: SelectionMode;
 
     /**
      * Flag to indicated whether the DIV has been created
@@ -103,7 +124,8 @@ export class Selector {
         const defaultOptions: OptionalParameters = {
             selectorUUID: htmlRandomUUID(),
             selectorClass: DEFAULTS.SELECTOR_CLASS,
-            markSelectedClass: DEFAULTS.MARK_SELECTED_CLASS
+            markSelectedClass: DEFAULTS.MARK_SELECTED_CLASS,
+            selectionMode: SelectionMode.PARTIAL_COVER
         };
 
         const optionsWithDefaultValues: OptionalParameters = {
@@ -120,6 +142,8 @@ export class Selector {
         this.selectableElementsQuery = selectableElementsQuery;
 
         this.markSelectedClass = optionsWithDefaultValues.markSelectedClass;
+
+        this.selectionMode = optionsWithDefaultValues.selectionMode;
 
         // need to do some binding to get "this" right within the event handlers
         this.onMouseDown = this.onMouseDown.bind(this);
@@ -391,7 +415,11 @@ export class Selector {
     private isSelectedBySelectionRectangle(element: HTMLElement): boolean {
         const elementRect = element.getBoundingClientRect();
 
-        return doOverlap(this.selectionRectangle, elementRect);
+        if (this.selectionMode === SelectionMode.PARTIAL_COVER) {
+            return doOverlap(this.selectionRectangle, elementRect);
+        } else {
+            return covers(this.selectionRectangle, elementRect);
+        }
     }
 
 }
@@ -428,6 +456,33 @@ function doOverlap(selectionRect: SelectionRectangle, elementRect: DOMRect): boo
     }
 
     return true;
+}
+
+/**
+ * Checks if the rect of given element is completely covered by the selection area.
+ *
+ * @param selectionRect - the rect of the selection area
+ * @param elementRect - the rect of the element to be tested
+ * @returns true if elementRect is completely covered by selectionRect, false otherwise
+ */
+function covers(selectionRect: SelectionRectangle, elementRect: DOMRect): boolean {
+    // if rectangle has area 0, no overlap
+    if (
+        selectionRect.right == selectionRect.left ||
+        selectionRect.top == selectionRect.bottom ||
+        elementRect.right == elementRect.left ||
+        elementRect.top == elementRect.bottom
+    ) {
+        return false;
+    }
+
+    // elementRect is within or matching selectionRect
+    return (
+        selectionRect.left <= elementRect.left &&
+        elementRect.right <= selectionRect.right &&
+        selectionRect.top <= elementRect.top &&
+        elementRect.bottom <= selectionRect.bottom
+    );
 }
 
 //==============================================================================
