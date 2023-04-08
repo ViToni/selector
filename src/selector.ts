@@ -13,6 +13,21 @@ export const DEFAULTS = {
     MARK_SELECTED_CLASS: "mark_selected"
 };
 
+/**
+ * Specifies how elements will be matched as selected.
+ */
+export enum SelectionMatchMode {
+    /**
+     * The selection area just needs to touch part of the element.
+     */
+    PARTIAL_COVER,
+
+    /**
+     * The selection area needs to cover the whole element.
+     */
+    FULL_COVER
+}
+
 //==============================================================================
 
 type Point = {
@@ -30,7 +45,8 @@ type Rectangle = {
 interface OptionalParameters {
     selectorUUID: string,
     selectorClass: string,
-    markSelectedClass: string
+    markSelectedClass: string,
+    selectionMatchMode: SelectionMatchMode
 }
 
 //==============================================================================
@@ -58,6 +74,11 @@ export class Selector {
      * CSS class to mark elements during selection.
      */
     private readonly markSelectedClass: string;
+
+    /**
+     * How will elements get selected.
+     */
+    private readonly selectionMatchMode: SelectionMatchMode;
 
     /**
      * Flag to indicate whether the selection DIV has been created
@@ -98,7 +119,8 @@ export class Selector {
         const defaultOptions: OptionalParameters = {
             selectorUUID: htmlRandomUUID(),
             selectorClass: DEFAULTS.SELECTOR_CLASS,
-            markSelectedClass: DEFAULTS.MARK_SELECTED_CLASS
+            markSelectedClass: DEFAULTS.MARK_SELECTED_CLASS,
+            selectionMatchMode: SelectionMatchMode.PARTIAL_COVER
         };
 
         const optionsWithDefaultValues: OptionalParameters = {
@@ -112,6 +134,8 @@ export class Selector {
         this.selectableElementsSelector = selectableElementsSelector;
 
         this.markSelectedClass = optionsWithDefaultValues.markSelectedClass;
+
+        this.selectionMatchMode = optionsWithDefaultValues.selectionMatchMode;
 
         // need to do some binding to get "this" right when called within event handlers
 
@@ -388,7 +412,11 @@ export class Selector {
     private matchedBySelection(element: HTMLElement): boolean {
         const elementRect = element.getBoundingClientRect();
 
-        return touches(this.selectionRectangle, elementRect);
+        if (this.selectionMatchMode === SelectionMatchMode.PARTIAL_COVER) {
+            return touches(this.selectionRectangle, elementRect);
+        } else {
+            return covers(this.selectionRectangle, elementRect);
+        }
     }
 
 }
@@ -448,6 +476,29 @@ function touches(selectionRect: Rectangle, elementRect: DOMRect): boolean {
     }
 
     return true;
+}
+
+/**
+ * Checks if the rect of given element is completely covered by the selection area.
+ *
+ * @param selectionRect - The rect of the selection area
+ * @param elementRect - The rect of the element to be tested
+ * @returns true if `elementRect` is completely covered by `selectionRect`, false otherwise
+ */
+function covers(selectionRect: Rectangle, elementRect: DOMRect): boolean {
+    if (selectionHasNoArea(selectionRect)) {
+        return false;
+    }
+
+    if (elementHasNoArea(elementRect)) {
+        return false;
+    }
+
+    // elementRect is within or matching selectionRect
+    return (
+        selectionRect.left <= elementRect.left && elementRect.right <= selectionRect.right &&
+        selectionRect.top <= elementRect.top && elementRect.bottom <= selectionRect.bottom
+    );
 }
 
 //==============================================================================

@@ -2,6 +2,12 @@
 
 A tiny DIV based selector supporting mouse and touch written in TypeScript.
 
+## Features
+
+* Modes for selecting elements
+  * Elements needs to be only partially covered
+  * Elements must be fully covered
+
 ## Using selector
 
 ```typescript
