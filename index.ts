@@ -55,6 +55,16 @@ function generateColumnElements(column: HTMLElement, height: number) {
 
 //==============================================================================
 
+const selectectedClass = "selected";
+
+function handleSelected(selectedElements: HTMLElement[]) {
+    selectedElements.forEach((selectedElement) => {
+        selectedElement.classList.add(selectectedClass);
+    });
+}
+
+//==============================================================================
+
 function onLoad() {
     const selectablesRootSelector = "div.selectables-root";
     const selectablesRoot = document.querySelector(selectablesRootSelector) as HTMLElement;
@@ -63,10 +73,22 @@ function onLoad() {
     const selectableElementsSelector = "div.selectables-root div.selectable";
 
     const selector = new Selector(
-        selectableElementsSelector
+        selectableElementsSelector,
+        handleSelected
     );
 
     selector.mount();
+
+    const clearSelectedButton = document.querySelector("#clear-selected") as HTMLElement;
+    function clearSelected() {
+        document
+            .querySelectorAll(selectableElementsSelector)
+            .forEach((selectedElement) => {
+                selectedElement.classList.remove(selectectedClass);
+            });
+    }
+
+    clearSelectedButton.addEventListener("click", clearSelected);
 }
 
 //==============================================================================

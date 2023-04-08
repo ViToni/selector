@@ -81,6 +81,11 @@ export class Selector {
     private readonly selectionMatchMode: SelectionMatchMode;
 
     /**
+     * Callback to be executed on selected elements when selection is completed.
+     */
+    private readonly onSelection: (selectedElements: HTMLElement[]) => void;
+
+    /**
      * Flag to indicate whether the selection DIV has been created
      * and the event handlers have been registered.
      */
@@ -114,6 +119,7 @@ export class Selector {
 
     public constructor(
         selectableElementsSelector: string,
+        onSelection: (selectedElements: HTMLElement[]) => void,
         options?: Partial<OptionalParameters>
     ) {
         const defaultOptions: OptionalParameters = {
@@ -128,10 +134,12 @@ export class Selector {
             ...options
         };
 
+        this.selectableElementsSelector = selectableElementsSelector;
+
+        this.onSelection = onSelection;
+
         this.selectorUUID = optionsWithDefaultValues.selectorUUID;
         this.selectorClass = optionsWithDefaultValues.selectorClass;
-
-        this.selectableElementsSelector = selectableElementsSelector;
 
         this.markSelectedClass = optionsWithDefaultValues.markSelectedClass;
 
@@ -233,10 +241,15 @@ export class Selector {
         if (this.selectionStarted) {
             this.selectionStarted = false;
 
-            this.hideSelectionRectangle();
-            this.resetSelectionRectangle();
+            // fail safe since we execute a user provided function
+            try {
+                this.handleSelected();
+            } finally {
+                this.hideSelectionRectangle();
+                this.resetSelectionRectangle();
 
-            this.unmarkSelectedElements();
+                this.unmarkSelectedElements();
+            }
         }
     }
 
@@ -400,6 +413,15 @@ export class Selector {
      */
     private unmarkSelected(element: HTMLElement) {
         element.classList.remove(this.markSelectedClass);
+    }
+
+    //==============================================================================
+
+    /**
+     * Delegates the selected elements to the user provided callback.
+     */
+    private handleSelected() {
+        this.onSelection(this.getSelectedElements());
     }
 
     //==============================================================================

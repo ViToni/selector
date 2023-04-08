@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="style.css">
     <title>Selector example</title>
     <style>
+        body {
+          align-items: start;
+        }
         .selectables-root {
           display: flex;
           flex-direction: row;
@@ -55,15 +58,31 @@
             background-position: 7px 0, -7px 100%, 0 -7px, 100% 7px;
           }
         }
-        /* For elements we want to mark during selection and add the "selected" class aferwards. */
-        .mark_selected {
+        /* For elements without the "selected" class which we want mark during selection
+         * to add the "selected" class afterwards.
+         */
+        .mark_selected:not(.selected) {
           /* Darken the marked elements a bit */
           box-shadow: inset 0em 0em 0em 10em rgba(0, 0, 0, 0.3);
+        }
+        .selected {
+          background: steelblue;
+        }
+        button {
+          margin: 10px 30px;
+        }
+        #clear-selected {
+          background: lightslategray;
         }
     </style>
   </head>
   <body>
-    <div class="selectables-root"></div>
+    <div>
+      <div>
+        <button id="clear-selected">Clear selected</button>
+      </div>
+      <div class="selectables-root"></div>
+    </div>
     <script type="module" src="index.ts">
     </script>
   </body>
