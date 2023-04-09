@@ -8,20 +8,25 @@ A tiny DIV based selector supporting mouse and touch written in TypeScript.
   * Elements needs to be only partially covered
   * Elements must be fully covered
 * Callback at end of selection with list of selected elements
+* Can switch between selecting and deselecting (already selected) elements
 
 ## Using selector
 
 ```typescript
-    import { Selector } from "@vitoni/selector";
+    import { SelectionMode, Selector } from "@vitoni/selector";
 
     // identifies all elements which can be selected
     const selectableElementsSelector = "div.selectable";
 
-    function handleSelected(selectedElements: HTMLElement[]) {
+    function handleSelected(selectedElements: HTMLElement[], selectionMode: SelectionMode) {
         // Other uses cases might change the data model which the elements visualize instead of the elements themselves.
         // The changed data model would trigger an update of the respective elements indirectly.
         selectedElements.forEach((selectedElement) => {
-            selectedElement.classList.add(selectectedClass);
+            if (selectionMode == SelectionMode.ADD) {
+                selectedElement.classList.add(selectectedClass);
+            } else {
+                selectedElement.classList.remove(selectectedClass);
+            }
         });
     }
 
@@ -32,6 +37,12 @@ A tiny DIV based selector supporting mouse and touch written in TypeScript.
     ...
     selector.mount();
     ...
+    // change mode of selection to deselect elements
+    selector.setSelectionMode(SelectionMode.REMOVE);
+    ...
+    // change mode of selection to select elements
+    selector.setSelectionMode(SelectionMode.ADD);
+    ...
     // cleanup only needed for SPA
     selector.unmount();
 ```
@@ -39,6 +50,7 @@ A tiny DIV based selector supporting mouse and touch written in TypeScript.
 * `mount()` registers event listeners and adds a `<div>` element to DOM to visualize the selection area.
 * `unmount()` deregisters event listeners and removes the selection area `<div>` element from DOM.
 * The callback `handleSelected` is called at the end of the selection with all elements which have been marked by the selection area.
+* The `SelectionMode` indicates whether the elements matching the selection should be regarded as selected or deselected.
 
 ## Getting started with development
 

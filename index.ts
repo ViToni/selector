@@ -1,4 +1,4 @@
-import { Selector } from "./src/selector";
+import { Selector, SelectionMode } from "./src/selector";
 
 //==============================================================================
 
@@ -57,9 +57,13 @@ function generateColumnElements(column: HTMLElement, height: number) {
 
 const selectectedClass = "selected";
 
-function handleSelected(selectedElements: HTMLElement[]) {
+function handleSelected(selectedElements: HTMLElement[], selectionMode: SelectionMode) {
     selectedElements.forEach((selectedElement) => {
-        selectedElement.classList.add(selectectedClass);
+        if (selectionMode == SelectionMode.ADD) {
+            selectedElement.classList.add(selectectedClass);
+        } else {
+            selectedElement.classList.remove(selectectedClass);
+        }
     });
 }
 
@@ -87,8 +91,45 @@ function onLoad() {
                 selectedElement.classList.remove(selectectedClass);
             });
     }
-
     clearSelectedButton.addEventListener("click", clearSelected);
+
+    const selectionModeButton = document.querySelector("#change-selection-mode") as HTMLElement;
+    setSelectionModeButtonText();
+
+    function setSelectionModeButtonText() {
+        const selectionMode = selector.getSelectionMode();
+        selectionModeButton.textContent = computeSelectionModeButtonText(selectionMode);
+        selectionModeButton.classList.remove(
+            computeSelectionModeButtonClass(SelectionMode.ADD),
+            computeSelectionModeButtonClass(SelectionMode.REMOVE)
+        );
+        selectionModeButton.classList.add(
+            computeSelectionModeButtonClass(selectionMode)
+        );
+    }
+
+    function computeSelectionModeButtonText(selectionMode: SelectionMode): string {
+        return (selectionMode == SelectionMode.ADD)
+            ? "Mode: Add"
+            : "Mode: Remove";
+    }
+
+    function computeSelectionModeButtonClass(selectionMode: SelectionMode): string {
+        return (selectionMode == SelectionMode.ADD)
+            ? "add"
+            : "remove";
+    }
+
+    function toggleSelectionMode() {
+        selector.setSelectionMode(
+            selector.getSelectionMode() == SelectionMode.ADD
+                ? SelectionMode.REMOVE
+                : SelectionMode.ADD
+        );
+        setSelectionModeButtonText();
+    }
+
+    selectionModeButton.addEventListener("click", toggleSelectionMode);
 }
 
 //==============================================================================

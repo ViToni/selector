@@ -10,7 +10,12 @@ export const DEFAULTS = {
     /**
      * Class used to style elements while being selected.
      */
-    MARK_SELECTED_CLASS: "mark_selected"
+    MARK_ADD_SELECTED_CLASS: "mark_add_selected",
+
+    /**
+     * Class used to style elements while being deselected.
+     */
+    MARK_REMOVE_SELECTED_CLASS: "mark_remove_selected"
 };
 
 /**
@@ -26,6 +31,29 @@ export enum SelectionMatchMode {
      * The selection area needs to cover the whole element.
      */
     FULL_COVER
+}
+
+/**
+ * Specifies how selected elements should be marked during selection and how
+ * they should be handled after the selection.
+ *
+ * It allows to distinguish between marking elements to be selected
+ * or marking elements to be removed from the selected state.
+ *
+ * This enum is used:
+ *  - to allow switching which CSS class is used to visualize selection
+ *  - as information about the current mode for the callback function for selected elements
+ */
+export enum SelectionMode {
+    /**
+     * Selected elements will be flagged to be ADDED to the selection state.
+     */
+    ADD,
+
+    /**
+     * Selected elements will be flagged to be REMOVED from the selection state.
+     */
+    REMOVE
 }
 
 //==============================================================================
@@ -45,7 +73,9 @@ type Rectangle = {
 interface OptionalParameters {
     selectorUUID: string,
     selectorClass: string,
-    markSelectedClass: string,
+    selectionMode: SelectionMode,
+    markAddSelectedClass: string,
+    markRemoveSelectedClass: string,
     selectionMatchMode: SelectionMatchMode
 }
 
@@ -71,9 +101,20 @@ export class Selector {
     private readonly selectableElementsSelector: string;
 
     /**
-     * CSS class to mark elements during selection.
+     * CSS class to mark elements during ADD selection.
      */
-    private readonly markSelectedClass: string;
+    private readonly markAddSelectedClass: string;
+
+    /**
+     * CSS class to mark elements during REMOVE selection.
+     */
+    private readonly markRemoveSelectedClass: string;
+
+    /**
+     * How should selected elements be marked during selection and how
+     * should they by handled after the selection.
+     */
+    private selectionMode: SelectionMode;
 
     /**
      * How will elements get selected.
@@ -83,7 +124,7 @@ export class Selector {
     /**
      * Callback to be executed on selected elements when selection is completed.
      */
-    private readonly onSelection: (selectedElements: HTMLElement[]) => void;
+    private readonly onSelection: (selectedElements: HTMLElement[], selectionMode: SelectionMode) => void;
 
     /**
      * Flag to indicate whether the selection DIV has been created
@@ -119,13 +160,15 @@ export class Selector {
 
     public constructor(
         selectableElementsSelector: string,
-        onSelection: (selectedElements: HTMLElement[]) => void,
+        onSelection: (selectedElements: HTMLElement[], selectionMarkMode: SelectionMode) => void,
         options?: Partial<OptionalParameters>
     ) {
         const defaultOptions: OptionalParameters = {
             selectorUUID: htmlRandomUUID(),
             selectorClass: DEFAULTS.SELECTOR_CLASS,
-            markSelectedClass: DEFAULTS.MARK_SELECTED_CLASS,
+            selectionMode: SelectionMode.ADD,
+            markAddSelectedClass: DEFAULTS.MARK_ADD_SELECTED_CLASS,
+            markRemoveSelectedClass: DEFAULTS.MARK_REMOVE_SELECTED_CLASS,
             selectionMatchMode: SelectionMatchMode.PARTIAL_COVER
         };
 
@@ -141,7 +184,10 @@ export class Selector {
         this.selectorUUID = optionsWithDefaultValues.selectorUUID;
         this.selectorClass = optionsWithDefaultValues.selectorClass;
 
-        this.markSelectedClass = optionsWithDefaultValues.markSelectedClass;
+        this.selectionMode = optionsWithDefaultValues.selectionMode;
+
+        this.markAddSelectedClass = optionsWithDefaultValues.markAddSelectedClass;
+        this.markRemoveSelectedClass = optionsWithDefaultValues.markRemoveSelectedClass;
 
         this.selectionMatchMode = optionsWithDefaultValues.selectionMatchMode;
 
@@ -155,6 +201,27 @@ export class Selector {
 
         this.unmarkSelected = this.unmarkSelected.bind(this);
         this.markSelected = this.markSelected.bind(this);
+
+        this.getSelectionMode = this.getSelectionMode.bind(this);
+        this.setSelectionMode = this.setSelectionMode.bind(this);
+    }
+
+    //==============================================================================
+
+    /**
+     * Gets the mode used to mark elements within the selection area and
+     * how selected elements should be handled after the selection.
+     */
+    public getSelectionMode(): SelectionMode {
+        return this.selectionMode;
+    }
+
+    /**
+     * Sets the mode for marking elements within the selection area and
+     * how selected elements should be handled after the selection.
+     */
+    public setSelectionMode(selectionMode: SelectionMode) {
+        this.selectionMode = selectionMode;
     }
 
     //==============================================================================
@@ -398,7 +465,11 @@ export class Selector {
      * Marks the given element as selected by adding the mark class to it.
      */
     private markSelected(element: HTMLElement) {
-        element.classList.add(this.markSelectedClass);
+        if (this.selectionMode == SelectionMode.ADD) {
+            element.classList.add(this.markAddSelectedClass);
+        } else {
+            element.classList.add(this.markRemoveSelectedClass);
+        }
     }
 
     /**
@@ -412,7 +483,7 @@ export class Selector {
      * Removes the mark class from the given element.
      */
     private unmarkSelected(element: HTMLElement) {
-        element.classList.remove(this.markSelectedClass);
+        element.classList.remove(this.markAddSelectedClass, this.markRemoveSelectedClass);
     }
 
     //==============================================================================
@@ -421,7 +492,7 @@ export class Selector {
      * Delegates the selected elements to the user provided callback.
      */
     private handleSelected() {
-        this.onSelection(this.getSelectedElements());
+        this.onSelection(this.getSelectedElements(), this.selectionMode);
     }
 
     //==============================================================================

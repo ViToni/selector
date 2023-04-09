@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="style.css">
     <title>Selector example</title>
     <style>
+        :root {
+          --selectable: lightblue;
+          --selected: steelblue;
+        }
         body {
           align-items: start;
         }
@@ -22,7 +26,7 @@
         }
         .selectable {
           display: inline-block;
-          background: lightblue;
+          background: var(--selectable);
           margin: 3px;
         }
         .selectable.tiny {
@@ -61,12 +65,27 @@
         /* For elements without the "selected" class which we want mark during selection
          * to add the "selected" class afterwards.
          */
-        .mark_selected:not(.selected) {
+        .mark_add_selected:not(.selected) {
+          /* Darken the marked elements a bit */
+          box-shadow: inset 0em 0em 0em 10em rgba(0, 0, 0, 0.3);
+        }
+        /* For elements with the "selected" class which we want mark during selection 
+         * for removal of the "selected" class.
+         */
+        .mark_remove_selected.selected {
           /* Darken the marked elements a bit */
           box-shadow: inset 0em 0em 0em 10em rgba(0, 0, 0, 0.3);
         }
         .selected {
-          background: steelblue;
+          background: var(--selected);
+        }
+        #change-selection-mode.add {
+          color: antiquewhite;
+          background: var(--selected);
+        }
+        #change-selection-mode.remove {
+          color: darkslategray;
+          background: var(--selectable);
         }
         button {
           margin: 10px 30px;
@@ -80,6 +99,7 @@
     <div>
       <div>
         <button id="clear-selected">Clear selected</button>
+        <button id="change-selection-mode"></button>
       </div>
       <div class="selectables-root"></div>
     </div>
