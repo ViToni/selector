@@ -34,7 +34,9 @@ A tiny DIV based selector supporting mouse and touch written in TypeScript.
         selectableElementsSelector,
         handleSelected
     );
+
     ...
+
     selector.mount();
     ...
     // change mode of selection to deselect elements
@@ -51,6 +53,41 @@ A tiny DIV based selector supporting mouse and touch written in TypeScript.
 * `unmount()` deregisters event listeners and removes the selection area `<div>` element from DOM.
 * The callback `handleSelected` is called at the end of the selection with all elements which have been marked by the selection area.
 * The `SelectionMode` indicates whether the elements matching the selection should be regarded as selected or deselected.
+
+### Multiple selectors
+
+```typescript
+    ...
+
+    const areaSelector = "#" + areaId;
+
+    // Identifies an area, the selection is restricted to.
+    // Useful:
+    //  - when multiple selection areas are used
+    //  - to show visual constrains of the selection area
+    const selectablesRootSelector = areaSelector + " div.selectables-root";
+
+    // identifies all elements which can be selected
+    const selectableElementsSelector = "div.selectable";
+
+    ...
+
+    const selector = new Selector(
+        selectableElementsSelector,
+        handleSelected,
+        {
+            selectablesRootSelector
+        }
+    );
+
+    ...
+```
+
+* The `selectablesRootSelector` allows to restrict the selection to the area identified by the selector.
+
+### Example code
+
+The example code in [index.ts](index.ts) shows how all these work together and also shows usage of multiple selection areas.
 
 ## Getting started with development
 

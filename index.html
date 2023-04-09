@@ -8,16 +8,43 @@
     <title>Selector example</title>
     <style>
         :root {
-          --selectable: lightblue;
-          --selected: steelblue;
+          --selectable-area1: lightblue;
+          --selected-area1: steelblue;
+          --selectable-area2: darkseagreen;
+          --selected-area2: darkslategray;
         }
         body {
           align-items: start;
         }
-        .selectables-root {
+        #areas {
           display: flex;
           flex-direction: row;
-          flex-wrap: nowrap;
+          align-items: stretch;
+          width: 100%;
+        }
+        .area {
+          display: flex;
+          flex: 1;
+          flex-direction: column;
+          align-items: stretch;
+          margin: 0px 20px;
+        }
+        .buttons {
+          display: flex;
+          flex-direction: row;
+          align-items: flex-start;
+        }
+        .buttons button {
+          flex: 1;
+        }
+        .selectables-root {
+          display: flex;
+          flex: 10;
+          flex-direction: row;
+          align-items: start;
+          justify-content: center;
+          padding: 20px 20px;
+          box-shadow: inset 0em 0em 0em 100em rgba(255, 255, 255, 0.05);
           user-select: none;
         }
         .column {
@@ -26,8 +53,13 @@
         }
         .selectable {
           display: inline-block;
-          background: var(--selectable);
           margin: 3px;
+        }
+        #area-1 .selectable {
+          background: var(--selectable-area1);
+        }
+        #area-2 .selectable {
+          background: var(--selectable-area2);
         }
         .selectable.tiny {
           width: 15px;
@@ -46,7 +78,6 @@
           height: 75px;
         }
         .selector-rect {
-          background-color: darkslateblue !important;
           background:
             linear-gradient(90deg, #111 50%, transparent 0) repeat-x,
             linear-gradient(90deg, #111 50%, transparent 0) repeat-x,
@@ -56,6 +87,12 @@
           background-position: 0 0, 0 100%, 0 0, 100% 0;
           animation: linearGradientMove .4s infinite linear;
           opacity: 0.3;
+        }
+        #area-1 .selector-rect {
+          background-color: darkslateblue !important;
+        }
+        #area-2 .selector-rect {
+          background-color: darkslategrey !important;
         }
         @keyframes linearGradientMove {
           100% {
@@ -76,32 +113,53 @@
           /* Darken the marked elements a bit */
           box-shadow: inset 0em 0em 0em 10em rgba(0, 0, 0, 0.3);
         }
-        .selected {
-          background: var(--selected);
+        #area-1 .selected {
+          background: var(--selected-area1);
         }
-        #change-selection-mode.add {
+        #area-2 .selected {
+          background: var(--selected-area2);
+        }
+        .change-selection-mode.add {
           color: antiquewhite;
-          background: var(--selected);
         }
-        #change-selection-mode.remove {
+        #area-1 .change-selection-mode.add {
+          background: var(--selected-area1);
+        }
+        #area-1 .change-selection-mode.remove {
           color: darkslategray;
-          background: var(--selectable);
+          background: var(--selectable-area1);
+        }
+        #area-2 .change-selection-mode.add {
+          background: var(--selected-area2);
+        }
+        #area-2 .change-selection-mode.remove {
+          color: black;
+          background: var(--selectable-area2);
         }
         button {
           margin: 10px 30px;
         }
-        #clear-selected {
+        .clear-selected {
           background: lightslategray;
         }
     </style>
   </head>
   <body>
-    <div>
-      <div>
-        <button id="clear-selected">Clear selected</button>
-        <button id="change-selection-mode"></button>
+    <div id="areas">
+      <div id="area-1" class="area">
+        <div class="buttons">
+          <button class="clear-selected">Clear selected</button>
+          <button class="change-selection-mode"></button>
+        </div>
+        <div class="selectables-root"></div>
       </div>
-      <div class="selectables-root"></div>
+      <div id="area-2" class="area">
+        <div class="buttons">
+          <button class="clear-selected">Clear selected</button>
+          <button class="change-selection-mode"></button>
+        </div>
+        <div class="selectables-root"></div>
+      </div>
     </div>
     <script type="module" src="index.ts">
     </script>

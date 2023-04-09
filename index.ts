@@ -69,21 +69,23 @@ function handleSelected(selectedElements: HTMLElement[], selectionMode: Selectio
 
 //==============================================================================
 
-function onLoad() {
-    const selectablesRootSelector = "div.selectables-root";
+function setupArea(areaId: string) {
+    const areaSelector = "#" + areaId;
+    const selectablesRootSelector = areaSelector + " div.selectables-root";
     const selectablesRoot = document.querySelector(selectablesRootSelector) as HTMLElement;
-    generateRandomElements(selectablesRoot, 10, 600);
+    generateRandomElements(selectablesRoot, 6, 400);
 
-    const selectableElementsSelector = "div.selectables-root div.selectable";
+    const selectableElementsSelector = "div.selectable";
 
     const selector = new Selector(
         selectableElementsSelector,
-        handleSelected
+        handleSelected,
+        { selectablesRootSelector }
     );
 
     selector.mount();
 
-    const clearSelectedButton = document.querySelector("#clear-selected") as HTMLElement;
+    const clearSelectedButton = document.querySelector(areaSelector + " .clear-selected") as HTMLElement;
     function clearSelected() {
         document
             .querySelectorAll(selectableElementsSelector)
@@ -93,7 +95,7 @@ function onLoad() {
     }
     clearSelectedButton.addEventListener("click", clearSelected);
 
-    const selectionModeButton = document.querySelector("#change-selection-mode") as HTMLElement;
+    const selectionModeButton = document.querySelector(areaSelector + " .change-selection-mode") as HTMLElement;
     setSelectionModeButtonText();
 
     function setSelectionModeButtonText() {
@@ -130,6 +132,13 @@ function onLoad() {
     }
 
     selectionModeButton.addEventListener("click", toggleSelectionMode);
+}
+
+//==============================================================================
+
+function onLoad() {
+    setupArea("area-1");
+    setupArea("area-2");
 }
 
 //==============================================================================

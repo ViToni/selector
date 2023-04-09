@@ -1,5 +1,5 @@
 /**
- * Default values for CSS class names.
+ * Default values for CSS class names used and other properties.
  */
 export const DEFAULTS = {
     /**
@@ -15,7 +15,15 @@ export const DEFAULTS = {
     /**
      * Class used to style elements while being deselected.
      */
-    MARK_REMOVE_SELECTED_CLASS: "mark_remove_selected"
+    MARK_REMOVE_SELECTED_CLASS: "mark_remove_selected",
+
+    /**
+     * Selector to identify the root of all selectables.
+     * Used to identify the area which restricts the selection area.
+     * If multiple selector instances are used, it may be useful to use a more
+     * specific selector than the default "body".
+     */
+    SELECTABLES_ROOT_SELECTOR: "body"
 };
 
 /**
@@ -76,6 +84,7 @@ interface OptionalParameters {
     selectionMode: SelectionMode,
     markAddSelectedClass: string,
     markRemoveSelectedClass: string,
+    selectablesRootSelector: string,
     selectionMatchMode: SelectionMatchMode
 }
 
@@ -94,6 +103,11 @@ export class Selector {
      * Class used to style the selection DIV.
      */
     private readonly selectorClass: string;
+
+    /**
+     * Selector identifying the root of selectable elements.
+     */
+    private readonly selectablesRootSelector: string;
 
     /**
      * Selector identifying all selectable elements.
@@ -169,6 +183,7 @@ export class Selector {
             selectionMode: SelectionMode.ADD,
             markAddSelectedClass: DEFAULTS.MARK_ADD_SELECTED_CLASS,
             markRemoveSelectedClass: DEFAULTS.MARK_REMOVE_SELECTED_CLASS,
+            selectablesRootSelector: DEFAULTS.SELECTABLES_ROOT_SELECTOR,
             selectionMatchMode: SelectionMatchMode.PARTIAL_COVER
         };
 
@@ -177,6 +192,7 @@ export class Selector {
             ...options
         };
 
+        this.selectablesRootSelector = optionsWithDefaultValues.selectablesRootSelector;
         this.selectableElementsSelector = selectableElementsSelector;
 
         this.onSelection = onSelection;
@@ -234,9 +250,14 @@ export class Selector {
             this.createSelectionRect();
             this.hideSelectionRectangle();
 
+            // adding mouse up listener to document to see the events
+            // even if released outside the selectable root
             document.addEventListener("mouseup", this.onMouseUp);
+
             document.addEventListener("mousemove", this.onMouseMove);
-            document.addEventListener("mousedown", this.onMouseDown);
+
+            // selection can only start within the selectable area
+            this.getSelectableRoot().addEventListener("mousedown", this.onMouseDown);
 
             this.isMounted = true;
         }
@@ -249,7 +270,8 @@ export class Selector {
         if (this.isMounted) {
             this.hideSelectionRectangle();
 
-            document.removeEventListener("mousedown", this.onMouseDown);
+            this.getSelectableRoot().removeEventListener("mousedown", this.onMouseDown);
+
             document.removeEventListener("mousemove", this.onMouseMove);
             document.removeEventListener("mouseup", this.onMouseUp);
 
@@ -328,8 +350,11 @@ export class Selector {
      * @param event - used to retrieve current mouse coordinates
      */
     private computeSelectionRectangle(event: MouseEvent) {
-        const x = event.clientX;
-        const y = event.clientY;
+        const selectableRoot = this.getSelectableRoot();
+        const selectableRect = selectableRoot.getBoundingClientRect();
+
+        const x = limitToRange(selectableRect.left, selectableRect.right, event.clientX);
+        const y = limitToRange(selectableRect.top, selectableRect.bottom, event.clientY);
 
         // mouse / touch is LEFT of starting point
         if (x < this.selectionStartPoint.x) {
@@ -363,6 +388,13 @@ export class Selector {
     //==============================================================================
 
     /**
+     * The element bounding the selection area and holding all selectable elements.
+     */
+    private getSelectableRoot(): HTMLElement {
+        return document.querySelector(this.selectablesRootSelector) as HTMLElement;
+    }
+
+    /**
      * Gets the element used to visualize the selection area.
      */
     private getSelectionRectNode(): HTMLElement {
@@ -374,7 +406,7 @@ export class Selector {
      */
     private getSelectableElements(): HTMLElement[] {
         const selectableElements: HTMLElement[] = [];
-        document
+        this.getSelectableRoot()
             .querySelectorAll(this.selectableElementsSelector)
             .forEach((element) => selectableElements.push(element as HTMLElement));
 
@@ -592,6 +624,27 @@ function covers(selectionRect: Rectangle, elementRect: DOMRect): boolean {
         selectionRect.left <= elementRect.left && elementRect.right <= selectionRect.right &&
         selectionRect.top <= elementRect.top && elementRect.bottom <= selectionRect.bottom
     );
+}
+
+//==============================================================================
+
+/**
+ * Limits the given value to the given range.
+ *
+ * @param from - minimum value (inclusive)
+ * @param to - maximum value (inclusive)
+ * @param value - to check against the given range
+ */
+function limitToRange(from: number, to: number, value: number): number {
+    if (to <= value) {
+        return to;
+    }
+
+    if (value <= from) {
+        return from;
+    }
+
+    return value;
 }
 
 //==============================================================================
