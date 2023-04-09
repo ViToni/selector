@@ -1,4 +1,4 @@
-import { Selector, SelectionMarkMode } from "./src/selector";
+import { DEFAULTS, Selector, SelectionMarkMode } from "./src/selector";
 
 //==============================================================================
 
@@ -80,7 +80,13 @@ function setupArea(areaId: string) {
     const selector = new Selector(
         selectableElementsQuery,
         handleSelected,
-        { selectablesRootQuery }
+        {
+            selectablesRootQuery,
+            selectorClass: [
+                DEFAULTS.SELECTOR_CLASS,
+                areaId
+            ]
+        }
     );
 
     selector.mount();
