@@ -1,4 +1,4 @@
-import { Selector } from "./src/selector";
+import { Selector, SelectionMarkMode } from "./src/selector";
 
 //==============================================================================
 
@@ -57,9 +57,13 @@ function generateColumnElements(column: HTMLElement, height: number) {
 
 const selectectedClass = "selected";
 
-function handleSelected(selectedElements: HTMLElement[]) {
+function handleSelected(selectedElements: HTMLElement[], selectionMarkMode: SelectionMarkMode) {
     selectedElements.forEach((selectedElement) => {
-        selectedElement.classList.add(selectectedClass);
+        if (selectionMarkMode == SelectionMarkMode.ADD) {
+            selectedElement.classList.add(selectectedClass);
+        } else {
+            selectedElement.classList.remove(selectectedClass);
+        }
     });
 }
 
@@ -87,8 +91,45 @@ function onLoad() {
                 selectedElement.classList.remove(selectectedClass);
             });
     }
-
     clearSelectedButton.addEventListener("click", clearSelected);
+
+    const selectionMarkModeButton = document.querySelector("#change-mark-mode") as HTMLElement;
+    setSelectionMarkModeButtonText();
+
+    function setSelectionMarkModeButtonText() {
+        const selectionMarkMode = selector.getSelectionMarkMode();
+        selectionMarkModeButton.textContent = computeSelectionMarkModeButtonText(selectionMarkMode);
+        selectionMarkModeButton.classList.remove(
+            computeSelectionMarkModeButtonClass(SelectionMarkMode.ADD),
+            computeSelectionMarkModeButtonClass(SelectionMarkMode.REMOVE)
+        );
+        selectionMarkModeButton.classList.add(
+            computeSelectionMarkModeButtonClass(selectionMarkMode)
+        );
+    }
+
+    function computeSelectionMarkModeButtonText(markMode: SelectionMarkMode): string {
+        return (markMode == SelectionMarkMode.ADD)
+            ? "Mode: Add"
+            : "Mode: Remove";
+    }
+
+    function computeSelectionMarkModeButtonClass(markMode: SelectionMarkMode): string {
+        return (markMode == SelectionMarkMode.ADD)
+            ? "add"
+            : "remove";
+    }
+
+    function toggleSelectionMarkMode() {
+        selector.setSelectionMarkMode(
+            selector.getSelectionMarkMode() == SelectionMarkMode.ADD
+                ? SelectionMarkMode.REMOVE
+                : SelectionMarkMode.ADD
+        );
+        setSelectionMarkModeButtonText();
+    }
+
+    selectionMarkModeButton.addEventListener("click", toggleSelectionMarkMode);
 }
 
 //==============================================================================
