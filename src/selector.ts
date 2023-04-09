@@ -1,5 +1,5 @@
 /**
- * Default values for CSS class names.
+ * Default values for CSS class names used and other properties.
  */
 export const DEFAULTS = {
     /**
@@ -15,7 +15,15 @@ export const DEFAULTS = {
     /**
      * Class used to style elements while being deselected.
      */
-    MARK_REMOVE_SELECTED_CLASS: "mark_remove_selected"
+    MARK_REMOVE_SELECTED_CLASS: "mark_remove_selected",
+
+    /**
+     * Query to identify the root of alls selectables.
+     * Used to identify the area which contrains the selection are.
+     * As default we use "body". For multiple selectors a it might be useful
+     * to narrow donw the query to a more specific element.
+     */
+    SELECTABLES_ROOT_QUERY: "body"
 };
 
 /**
@@ -73,7 +81,8 @@ interface OptionalParameters {
     markAddSelectedClass: string,
     markRemoveSelectedClass: string,
     selectionMode: SelectionMode,
-    selectionMarkMode: SelectionMarkMode
+    selectionMarkMode: SelectionMarkMode,
+    selectablesRootQuery: string
 }
 
 //==============================================================================
@@ -96,6 +105,11 @@ export class Selector {
      * Query to "find" the selection DIV
      */
     private readonly selectorRectQuery: string;
+
+    /**
+     * Query identifying the root of selectable elements.
+     */
+    private readonly selectablesRootQuery: string;
 
     /**
      * Query identifying all selectable elements.
@@ -174,7 +188,8 @@ export class Selector {
             markAddSelectedClass: DEFAULTS.MARK_ADD_SELECTED_CLASS,
             markRemoveSelectedClass: DEFAULTS.MARK_REMOVE_SELECTED_CLASS,
             selectionMode: SelectionMode.PARTIAL_COVER,
-            selectionMarkMode: SelectionMarkMode.ADD
+            selectionMarkMode: SelectionMarkMode.ADD,
+            selectablesRootQuery: DEFAULTS.SELECTABLES_ROOT_QUERY
         };
 
         const optionsWithDefaultValues: OptionalParameters = {
@@ -193,6 +208,8 @@ export class Selector {
         this.markAddSelectedClass = optionsWithDefaultValues.markAddSelectedClass;
         this.markRemoveSelectedClass = optionsWithDefaultValues.markRemoveSelectedClass;
         this.selectionMarkMode = optionsWithDefaultValues.selectionMarkMode;
+
+        this.selectablesRootQuery = optionsWithDefaultValues.selectablesRootQuery;
 
         this.onSelectedCallback = onSelectedCallback;
 
@@ -237,9 +254,14 @@ export class Selector {
             this.createSelectionRect();
             this.hideSelectionRectangle();
 
+            // adding mouse up listener to document to see the events
+            // even if released outside the selectable root
             document.addEventListener("mouseup", this.onMouseUp);
+
             document.addEventListener("mousemove", this.onMouseMove);
-            document.addEventListener("mousedown", this.onMouseDown);
+
+            // selection can only start within the selectable area
+            this.getSelectableRoot().addEventListener("mousedown", this.onMouseDown);
 
             this.isMounted = true;
         }
@@ -252,7 +274,8 @@ export class Selector {
         if (this.isMounted) {
             this.hideSelectionRectangle();
 
-            document.removeEventListener("mousedown", this.onMouseDown);
+            this.getSelectableRoot().removeEventListener("mousedown", this.onMouseDown);
+
             document.removeEventListener("mousemove", this.onMouseMove);
             document.removeEventListener("mouseup", this.onMouseUp);
 
@@ -324,8 +347,11 @@ export class Selector {
      * @param event - used to retrieve current mouse coordinates
      */
     private computeSelectionRectangle(event: MouseEvent) {
-        const x = event.clientX;
-        const y = event.clientY;
+        const selectableRoot = this.getSelectableRoot();
+        const selectableRect = selectableRoot.getBoundingClientRect();
+
+        const x = limitToRange(selectableRect.left, selectableRect.right, event.clientX);
+        const y = limitToRange(selectableRect.top, selectableRect.bottom, event.clientY);
 
         // mouse / touch is LEFT of starting point
         if (x < this.selectionStartPoint.x) {
@@ -359,6 +385,13 @@ export class Selector {
     //==============================================================================
 
     /**
+     * The element bounding the selection area.
+     */
+    private getSelectableRoot(): HTMLElement {
+        return document.querySelector(this.selectablesRootQuery) as HTMLElement;
+    }
+
+    /**
      * Gets the element used to visualize the selection area.
      */
     private getSelectionRectNode(): HTMLElement {
@@ -370,7 +403,7 @@ export class Selector {
      */
     private getSelectableElements(): HTMLElement[] {
         const selectableElements: HTMLElement[] = [];
-        document
+        this.getSelectableRoot()
             .querySelectorAll(this.selectableElementsQuery)
             .forEach((element) => selectableElements.push(element as HTMLElement));
 
@@ -573,6 +606,27 @@ function covers(selectionRect: SelectionRectangle, elementRect: DOMRect): boolea
         selectionRect.top <= elementRect.top &&
         elementRect.bottom <= selectionRect.bottom
     );
+}
+
+//==============================================================================
+
+/**
+ * Limits the given value to the given range.
+ *
+ * @param from - minimum value (inclusive)
+ * @param to - maximum value (inclusive)
+ * @param value - to check against the given range
+ */
+function limitToRange(from: number, to: number, value: number): number {
+    if (to <= value) {
+        return to;
+    }
+
+    if (value <= from) {
+        return from;
+    }
+
+    return value;
 }
 
 //==============================================================================

@@ -69,21 +69,23 @@ function handleSelected(selectedElements: HTMLElement[], selectionMarkMode: Sele
 
 //==============================================================================
 
-function onLoad() {
-    const selectablesRootQuery = "div.selectables-root";
+function setupArea(areaId: string) {
+    const areaQuery = "#" + areaId;
+    const selectablesRootQuery = areaQuery + " div.selectables-root";
     const selectablesRoot = document.querySelector(selectablesRootQuery) as HTMLElement;
-    generateRandomElements(selectablesRoot, 10, 600);
+    generateRandomElements(selectablesRoot, 6, 400);
 
-    const selectableElementsQuery = "div.selectables-root div.selectable";
+    const selectableElementsQuery = "div.selectable";
 
     const selector = new Selector(
         selectableElementsQuery,
-        handleSelected
+        handleSelected,
+        { selectablesRootQuery }
     );
 
     selector.mount();
 
-    const clearSelectedButton = document.querySelector("#clear-selected") as HTMLElement;
+    const clearSelectedButton = document.querySelector(areaQuery + " .clear-selected") as HTMLElement;
     function clearSelected() {
         document
             .querySelectorAll(selectableElementsQuery)
@@ -93,7 +95,7 @@ function onLoad() {
     }
     clearSelectedButton.addEventListener("click", clearSelected);
 
-    const selectionMarkModeButton = document.querySelector("#change-mark-mode") as HTMLElement;
+    const selectionMarkModeButton = document.querySelector(areaQuery + " .change-mark-mode") as HTMLElement;
     setSelectionMarkModeButtonText();
 
     function setSelectionMarkModeButtonText() {
@@ -130,6 +132,13 @@ function onLoad() {
     }
 
     selectionMarkModeButton.addEventListener("click", toggleSelectionMarkMode);
+}
+
+//==============================================================================
+
+function onLoad() {
+    setupArea("area-1");
+    setupArea("area-2");
 }
 
 //==============================================================================

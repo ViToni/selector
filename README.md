@@ -15,6 +15,14 @@ A tiny DIV based selector supporting mouse and touch written in TypeScript.
 ```typescript
     import { SelectionMarkMode, Selector  } from "@vitoni/selector";
 
+    const areaQuery = "#" + areaId;
+
+    // identifies an area, the selection is restricted to
+    // useful
+    //  - when multiple selection areas are used
+    //  - to show visual constrains of the selection area
+    const selectablesRootQuery = areaQuery + " div.selectables-root";
+
     // identifies all elements which can be selected
     const selectableElementsQuery = "div.selectable";
 
@@ -32,7 +40,8 @@ A tiny DIV based selector supporting mouse and touch written in TypeScript.
 
     const selector = new Selector(
         selectableElementsQuery,
-        handleSelected
+        handleSelected,
+        { selectablesRootQuery }
     );
     ...
     selector.mount();
@@ -47,10 +56,13 @@ A tiny DIV based selector supporting mouse and touch written in TypeScript.
     selector.unmount();
 ```
 
+* The `selectablesRootQuery` allows to restrict the selection to the area identified by the query.
 * `mount()` registers event listeners and adds a `<div>` element to DOM to visualize the selection area.
 * `unmount()` deregisters event listeners and removes the selection area `<div>` element from DOM.
 * The callback `handleSelected` is called at the end of the selection with all elements which have been marked by the selection area.
 * The `SelectionMarkMode` indicates whether the marked elements should be regarded as selected or deselected.
+
+The example code in [index.ts](index.ts) shows how all these work together and also shows usage of multiple selection areas.
 
 ## Getting started with development
 
