@@ -80,7 +80,7 @@ type Rectangle = {
 
 interface OptionalParameters {
     selectorUUID: string,
-    selectorClass: string,
+    selectorClass: string | string[],
     selectionMode: SelectionMode,
     markAddSelectedClass: string,
     markRemoveSelectedClass: string,
@@ -100,9 +100,9 @@ export class Selector {
     private readonly selectorUUID: string;
 
     /**
-     * Class used to style the selection DIV.
+     * List of classes used to style the selection DIV.
      */
-    private readonly selectorClass: string;
+    private readonly selectorClassList: string[];
 
     /**
      * Selector identifying the root of selectable elements.
@@ -198,7 +198,9 @@ export class Selector {
         this.onSelection = onSelection;
 
         this.selectorUUID = optionsWithDefaultValues.selectorUUID;
-        this.selectorClass = optionsWithDefaultValues.selectorClass;
+        this.selectorClassList = Array.isArray(optionsWithDefaultValues.selectorClass)
+            ? optionsWithDefaultValues.selectorClass
+            : optionsWithDefaultValues.selectorClass.split(" ");
 
         this.selectionMode = optionsWithDefaultValues.selectionMode;
 
@@ -459,7 +461,7 @@ export class Selector {
     private createSelectionRect() {
         const node = document.createElement("div");
         node.id = this.selectorUUID;
-        node.className = this.selectorClass;
+        node.classList.add(...this.selectorClassList);
 
         node.style.setProperty("display", "block", "important");
         node.style.setProperty("position", "absolute", "important");
