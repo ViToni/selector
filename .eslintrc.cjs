@@ -13,7 +13,10 @@ module.exports = {
     parserOptions: {
         ecmaVersion: "latest"
     },
-    plugins: ["@typescript-eslint"],
+    plugins: [
+        "@typescript-eslint",
+        "eslint-plugin-tsdoc"
+    ],
     rules: {
         // custom rules
         indent: [
@@ -84,6 +87,7 @@ module.exports = {
             {
                 "argsIgnorePattern": "^_"
             }
-        ]
+        ],
+        "tsdoc/syntax": "warn"
     }
 };
