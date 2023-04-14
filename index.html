@@ -7,49 +7,8 @@
     <link rel="stylesheet" href="style.css">
     <title>Selector example</title>
     <style>
-        :root {
-          --selectable-area1: lightblue;
-          --selected-area1: steelblue;
-          --selectable-area2: darkseagreen;
-          --selected-area2: darkslategray;
-        }
-        body {
-          align-items: start;
-        }
-        #areas {
-          display: flex;
-          flex-direction: row;
-          align-items: stretch;
-          width: 100%;
-        }
-        .area {
-          display: flex;
-          flex: 1;
-          flex-direction: column;
-          align-items: stretch;
-          margin: 0px 20px;
-        }
-        .buttons {
-          display: flex;
-          flex-direction: row;
-          align-items: flex-start;
-        }
-        .buttons button {
-          flex: 1;
-        }
         .selectables-root {
-          display: flex;
-          flex: 10;
-          flex-direction: row;
-          align-items: start;
-          justify-content: center;
-          padding: 20px 20px;
-          box-shadow: inset 0em 0em 0em 100em rgba(255, 255, 255, 0.05);
           user-select: none;
-        }
-        .column {
-          display: flex;
-          flex-direction: column;
         }
         .selectable {
           display: inline-block;
@@ -135,9 +94,6 @@
         #area-2 .change-selection-mode.remove {
           color: black;
           background: var(--selectable-area2);
-        }
-        button {
-          margin: 10px 30px;
         }
         .clear-selected {
           background: lightslategray;
