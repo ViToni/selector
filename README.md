@@ -87,7 +87,7 @@ A tiny DIV based selector supporting mouse and touch written in TypeScript.
 
 ### Example code
 
-The example code in [index.ts](index.ts) shows how all these work together and also shows usage of multiple selection areas.
+The example code in [setup.ts](example/setup.ts) shows how all these work together and also shows usage of multiple selection areas.
 
 ## Getting started with development
 
