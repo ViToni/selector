@@ -62,7 +62,7 @@ A tiny DIV based selector supporting mouse and touch written in TypeScript.
 * The callback `handleSelected` is called at the end of the selection with all elements which have been marked by the selection area.
 * The `SelectionMarkMode` indicates whether the marked elements should be regarded as selected or deselected.
 
-The example code in [index.ts](index.ts) shows how all these work together and also shows usage of multiple selection areas.
+The example code in [setup.ts](example/setup.ts) shows how all these work together and also shows usage of multiple selection areas.
 
 ## Getting started with development
 

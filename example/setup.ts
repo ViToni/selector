@@ -1,4 +1,4 @@
-import { DEFAULTS, Selector, SelectionMarkMode } from "./src/selector";
+import { DEFAULTS, Selector, SelectionMarkMode } from "../src/selector";
 
 //==============================================================================
 
