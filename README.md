@@ -119,3 +119,19 @@ Fix linting errors automatically:
 ```sh
 npm run lint-fix
 ```
+
+### Local usage without publishing for development
+
+Make `selector` package locally available:
+
+```sh
+cd selector
+npm link
+```
+
+Use local version directly in consuming project
+
+```sh
+cd consuming-project
+npm link "@vitoni/selector"
+```

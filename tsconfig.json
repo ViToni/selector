@@ -6,6 +6,11 @@
     "moduleResolution": "Node",
     "lib": ["ES6", "DOM"],            /* Default set of type definitions for known JS APIs */
 
+
+    "outDir": "dist",                 /* Where should the generated files go to */
+    "composite": true,                /* Enforces certain constraints which make it possible for build
+                                        tools to quickly determine if a project has been built yet. */
+
     "strict": true,                   /* Enables a wide range of type checking behavior that results in stronger
                                         guarantees of program correctness. Turning this on is equivalent to enabling
                                         all of the strict mode family options */
@@ -21,5 +26,5 @@
     "skipLibCheck": false,            /* Don't skip type checking of declaration files. We are pedantic. */
     "allowUnreachableCode": false     /* Raises compiler errors about unreachable code */
   },
-  "include": ["src", "index.ts", "vite-env.d.ts"]
+  "include": [ "src" ]
 }
