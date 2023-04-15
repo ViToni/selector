@@ -1,4 +1,4 @@
-import { DEFAULTS, Selector, SelectionMode } from "../src/selector";
+import { DEFAULTS, Selector, SelectionMode } from "../src";
 import { generateRandomElements } from "./randomElements";
 
 //==============================================================================
