@@ -8,6 +8,7 @@
 
 
     "outDir": "dist",                 /* Where should the generated files go to */
+    "sourceMap": true,
     "composite": true,                /* Enforces certain constraints which make it possible for build
                                         tools to quickly determine if a project has been built yet. */
 
@@ -26,5 +27,5 @@
     "skipLibCheck": false,            /* Don't skip type checking of declaration files. We are pedantic. */
     "allowUnreachableCode": false     /* Raises compiler errors about unreachable code */
   },
-  "include": [ "src" ]
+  "include": [ "src", "example" ]
 }

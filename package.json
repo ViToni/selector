@@ -1,19 +1,19 @@
 {
   "name": "@vitoni/selector",
   "description": "A tiny DIV based selector supporting mouse and touch written in TypeScript",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "type": "module",
   "private": false,
   "files": [
     "dist"
   ],
-  "main": "./dist/main.cjs",
-  "types": "./dist/main.d.ts",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "require": "./dist/main.cjs",
-      "default": "./dist/main.js",
-      "types": "./dist/main.d.ts"
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js",
+      "types": "./dist/index.d.ts"
     },
     "./uuid": {
       "require": "./dist/randomUUID.cjs",
@@ -24,7 +24,7 @@
   "scripts": {
     "dev": "vite",
     "dev:host": "vite --host",
-    "build": "tsc && vite build",
+    "build": "vite build && tsc -p tsconfig.dist.json",
     "preview": "vite preview",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --ignore-path .gitignore",
     "lint-fix": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
@@ -59,7 +59,6 @@
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-tsdoc": "^0.2.17",
     "typescript": "^4.9.3",
-    "vite": "^4.2.0",
-    "vite-plugin-dts": "^2.2.0"
+    "vite": "^4.2.0"
   }
 }

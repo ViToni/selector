@@ -1,13 +1,13 @@
-import { resolve } from "path";
 import { defineConfig } from "vite";
-import dts from "vite-plugin-dts";
 import typescript from "@rollup/plugin-typescript";
+
+import * as path from "path";
+
+const projectRootDir = path.resolve(__dirname);
+const resolvePath = (str: string) => path.resolve(projectRootDir, str);
 
 export default defineConfig({
     plugins: [
-        dts({
-            outputDir: ["dist"]
-        }),
         typescript()
     ],
     build: {
@@ -15,8 +15,8 @@ export default defineConfig({
         emptyOutDir: true,
         lib: {
             entry: {
-                main: resolve(__dirname, "src/index.ts"),
-                randomUUID: resolve(__dirname, "src/randomUUID.ts")
+                index: resolvePath("src/index.ts"),
+                randomUUID: resolvePath("src/randomUUID.ts")
             },
             formats: ["es", "cjs"]
         },
@@ -27,3 +27,5 @@ export default defineConfig({
         }
     }
 });
+
+//==============================================================================
