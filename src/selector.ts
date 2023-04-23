@@ -25,7 +25,17 @@ export const DEFAULTS = {
      * As default we use "body". For multiple selectors a it might be useful
      * to narrow donw the query to a more specific element.
      */
-    SELECTABLES_ROOT_QUERY: "body"
+    SELECTABLES_ROOT_QUERY: "body",
+
+    /**
+     * Maximun distance from selection start coordinates to current position so that
+     * one mouse down / mouse up action could be considered a click instead of a selection.
+     * The threshold is used to allow minimum movement and clicking without automatically
+     * starting a selection (which has a SelectionMarkMode, which might have to be changed
+     * for selecting / deselecting elements).
+     */
+    CLICK_THRESHOLD: 5 // chosen by fair dice roll
+
 };
 
 /**
@@ -85,6 +95,8 @@ interface OptionalParameters {
     selectionMode: SelectionMode,
     selectionMarkMode: SelectionMarkMode,
     selectablesRootQuery: string
+    clickThreshold: number,
+    onClickCallback?: (element: HTMLElement) => void,
 }
 
 //==============================================================================
@@ -148,6 +160,16 @@ export class Selector {
         ) => void;
 
     /**
+     * Callback to be executed when clicking elements.
+     */
+    private readonly onClickCallback?: (element: HTMLElement) => void;
+
+    /**
+     * Threshold for any of the selection area dimensions to consider mouse down /mouse up a clcik
+     */
+    private readonly clickThreshold;
+
+    /**
      * Flag to indicated whether the DIV has been created
      * and the event handlers have been registered.
      */
@@ -157,6 +179,11 @@ export class Selector {
      * Flag indicating whether a mouse drag action has been initiated
      */
     private isMouseDown = false;
+
+    /**
+     * Flag indicating whether the current selection could be still considered as a click action.
+     */
+    private isStillClick = true;
 
     /**
      * Initial starting point of selection.
@@ -191,7 +218,8 @@ export class Selector {
             markRemoveSelectedClass: DEFAULTS.MARK_REMOVE_SELECTED_CLASS,
             selectionMode: SelectionMode.PARTIAL_COVER,
             selectionMarkMode: SelectionMarkMode.ADD,
-            selectablesRootQuery: DEFAULTS.SELECTABLES_ROOT_QUERY
+            selectablesRootQuery: DEFAULTS.SELECTABLES_ROOT_QUERY,
+            clickThreshold: DEFAULTS.CLICK_THRESHOLD
         };
 
         const optionsWithDefaultValues: OptionalParameters = {
@@ -217,6 +245,9 @@ export class Selector {
 
         this.onSelectedCallback = onSelectedCallback;
 
+        this.onClickCallback = optionsWithDefaultValues.onClickCallback;
+        this.clickThreshold = optionsWithDefaultValues.clickThreshold;
+
         this.selectionMode = optionsWithDefaultValues.selectionMode;
 
         // need to do some binding to get "this" right within the event handlers
@@ -225,6 +256,8 @@ export class Selector {
         this.onMouseUp = this.onMouseUp.bind(this);
 
         this.isSelectedBySelectionRectangle = this.isSelectedBySelectionRectangle.bind(this);
+        this.isClicked = this.isClicked.bind(this);
+
         this.unmarkSelected = this.unmarkSelected.bind(this);
         this.markSelected = this.markSelected.bind(this);
 
@@ -300,9 +333,15 @@ export class Selector {
         event.preventDefault();
 
         this.isMouseDown = true;
+        this.isStillClick = true;
 
         this.selectionStartPoint.x = event.clientX;
         this.selectionStartPoint.y = event.clientY;
+
+        this.selectionRectangle.right = event.clientX;
+        this.selectionRectangle.left = event.clientX;
+        this.selectionRectangle.top = event.clientY;
+        this.selectionRectangle.bottom = event.clientY;
     }
 
     /**
@@ -319,6 +358,12 @@ export class Selector {
         this.computeSelectionRectangle(event);
         this.showSelectionRectangle();
 
+        // maybe the user moved to far, then we don't want to consider it still
+        // as a click when the user shrinks the area again
+        if (this.isStillClick) {
+            this.isStillClick = this.isInClickRange();
+        }
+
         this.markSelectedElements();
     }
 
@@ -331,7 +376,7 @@ export class Selector {
         if (this.isMouseDown) {
             this.isMouseDown = false;
 
-            // fail safe since we execute a user provided function
+            // fail safe since we execute user provided functions
             try {
                 this.handleSelected();
             } finally {
@@ -374,6 +419,33 @@ export class Selector {
             this.selectionRectangle.top = y;
             this.selectionRectangle.bottom = this.selectionStartPoint.y;
         }
+    }
+
+    /**
+     * Uses the size of the selection area to check if the current selection
+     * could be a still regarded as a click.
+     * The selection area contains the starting point and the current position
+     * which allows computing the distance from the current position to the
+     * starting point.
+     * A distance below the given threshold is regarded as within click range.
+     */
+    private isInClickRange(): boolean {
+        const width = Math.abs(this.selectionRectangle.right - this.selectionRectangle.left);
+        if (this.clickThreshold < width) {
+            return false;
+        }
+
+        const height = Math.abs(this.selectionRectangle.bottom - this.selectionRectangle.top);
+        if (this.clickThreshold < height) {
+            return false;
+        }
+
+        const hypotenuse = Math.sqrt(width * width + height * height);
+        if (this.clickThreshold < hypotenuse) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -529,7 +601,21 @@ export class Selector {
      * Delegates the selected elements to the user provided callback.
      */
     private handleSelected() {
-        this.onSelectedCallback(this.getSelectedElements(), this.selectionMarkMode);
+        const selectableElements = this.getSelectableElements();
+
+        const shouldHandleSingleElementClick = this.isStillClick && this.onClickCallback;
+
+        if (shouldHandleSingleElementClick) {
+            const selectedElements = selectableElements.filter(this.isClicked);
+
+            if (selectedElements.length == 1) {
+                this.onClickCallback?.(selectedElements[0]);
+                return;
+            }
+        }
+
+        const selectedElements = selectableElements.filter(this.isSelectedBySelectionRectangle);
+        this.onSelectedCallback(selectedElements, this.selectionMarkMode);
     }
 
     //==============================================================================
@@ -549,6 +635,16 @@ export class Selector {
         }
     }
 
+    /**
+     * Checks if a given element is selected by the selection area.
+     * @param element - to be checked
+     */
+    private isClicked(element: HTMLElement): boolean {
+        const elementRect = element.getBoundingClientRect();
+
+        return doOverlap(this.selectionRectangle, elementRect);
+    }
+
 }
 
 //==============================================================================
@@ -561,13 +657,8 @@ export class Selector {
  * @returns true if selectionRect overlaps any part of the elementRect, false otherwise
  */
 function doOverlap(selectionRect: SelectionRectangle, elementRect: DOMRect): boolean {
-    // if rectangle has area 0, no overlap
-    if (
-        selectionRect.right == selectionRect.left ||
-        selectionRect.top == selectionRect.bottom ||
-        elementRect.right == elementRect.left ||
-        elementRect.top == elementRect.bottom
-    ) {
+    // if element has area 0, no overlap
+    if (elementRect.right == elementRect.left || elementRect.top == elementRect.bottom) {
         return false;
     }
 
@@ -593,13 +684,8 @@ function doOverlap(selectionRect: SelectionRectangle, elementRect: DOMRect): boo
  * @returns true if elementRect is completely covered by selectionRect, false otherwise
  */
 function covers(selectionRect: SelectionRectangle, elementRect: DOMRect): boolean {
-    // if rectangle has area 0, no overlap
-    if (
-        selectionRect.right == selectionRect.left ||
-        selectionRect.top == selectionRect.bottom ||
-        elementRect.right == elementRect.left ||
-        elementRect.top == elementRect.bottom
-    ) {
+    // if element has area 0, no overlap
+    if (elementRect.right == elementRect.left || elementRect.top == elementRect.bottom) {
         return false;
     }
 
