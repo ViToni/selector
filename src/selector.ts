@@ -178,7 +178,7 @@ export class Selector {
     /**
      * Flag indicating whether a mouse drag action has been initiated
      */
-    private isMouseDown = false;
+    private selectionStarted = false;
 
     /**
      * Flag indicating whether the current selection could be still considered as a click action.
@@ -255,6 +255,11 @@ export class Selector {
         this.onMouseMove = this.onMouseMove.bind(this);
         this.onMouseUp = this.onMouseUp.bind(this);
 
+        this.onTouchStart = this.onTouchStart.bind(this);
+        this.onTouchMove = this.onTouchMove.bind(this);
+        this.onTouchEnd = this.onTouchEnd.bind(this);
+        this.onTouchCancel = this.onTouchCancel.bind(this);
+
         this.isSelectedBySelectionRectangle = this.isSelectedBySelectionRectangle.bind(this);
         this.isClicked = this.isClicked.bind(this);
 
@@ -300,6 +305,16 @@ export class Selector {
             // selection can only start within the selectable area
             this.getSelectableRoot().addEventListener("mousedown", this.onMouseDown);
 
+            // adding touch listeners to document to see the events
+            // even if released outside the selectable root
+            document.addEventListener("touchend", this.onTouchEnd);
+            document.addEventListener("touchcancel", this.onTouchCancel);
+
+            document.addEventListener("touchmove", this.onTouchMove, {passive: false});
+
+            // selection can only start within the selectable area
+            this.getSelectableRoot().addEventListener("touchstart", this.onTouchStart);
+
             this.isMounted = true;
         }
     }
@@ -316,6 +331,13 @@ export class Selector {
             document.removeEventListener("mousemove", this.onMouseMove);
             document.removeEventListener("mouseup", this.onMouseUp);
 
+            this.getSelectableRoot().removeEventListener("touchstart", this.onTouchStart);
+
+            document.removeEventListener("touchmove", this.onTouchMove);
+
+            document.removeEventListener("touchend", this.onTouchEnd);
+            document.removeEventListener("touchcancel", this.onTouchCancel);
+
             this.removeSelectionRect();
 
             this.isMounted = false;
@@ -327,35 +349,32 @@ export class Selector {
     /**
      * Start the selection process.
      *
-     * @param event - used to define th initial coordinates of the selection area.
+     * @param eventLocation - start coordinates of the selection area
      */
-    private onMouseDown(event: MouseEvent) {
-        event.preventDefault();
+    private startSelection(eventLocation: Point) {
+        this.selectionStarted = true;
 
-        this.isMouseDown = true;
         this.isStillClick = true;
 
-        this.selectionStartPoint.x = event.clientX;
-        this.selectionStartPoint.y = event.clientY;
+        this.selectionStartPoint.x = eventLocation.x;
+        this.selectionStartPoint.y = eventLocation.y;
 
-        this.selectionRectangle.right = event.clientX;
-        this.selectionRectangle.left = event.clientX;
-        this.selectionRectangle.top = event.clientY;
-        this.selectionRectangle.bottom = event.clientY;
+        this.selectionRectangle.right = eventLocation.x;
+        this.selectionRectangle.left = eventLocation.x;
+        this.selectionRectangle.top = eventLocation.y;
+        this.selectionRectangle.bottom = eventLocation.y;
     }
 
     /**
-     * Handles changes of the selection area by mouse moves.
+     * Handles changes of the selection area by mouse / touch moves.
      */
-    private onMouseMove(event: MouseEvent) {
+    private onMove(eventLocation: Point) {
         // ignore event when user didn't start dragging yet
-        if (!this.isMouseDown) {
+        if (!this.selectionStarted) {
             return;
         }
 
-        event.preventDefault();
-
-        this.computeSelectionRectangle(event);
+        this.computeSelectionRectangle(eventLocation);
         this.showSelectionRectangle();
 
         // maybe the user moved to far, then we don't want to consider it still
@@ -369,38 +388,127 @@ export class Selector {
 
     /**
      * Handles end of selection (if any is active).
-     *
-     * @param _unused - unused but required to match callback signature
      */
-    private onMouseUp(_unused: MouseEvent) {
-        if (this.isMouseDown) {
-            this.isMouseDown = false;
+    private endSelection() {
+        if (this.selectionStarted) {
+            this.selectionStarted = false;
 
             // fail safe since we execute user provided functions
             try {
                 this.handleSelected();
             } finally {
-                this.hideSelectionRectangle();
-                this.resetSelectionRectangle();
-
-                this.unmarkSelectedElements();
+                this.cleanupSelection();
             }
         }
+    }
+
+    /**
+     * Is also called in case the selection was cancelled.
+     */
+    private cleanupSelection() {
+        this.hideSelectionRectangle();
+        this.resetSelectionRectangle();
+
+        this.unmarkSelectedElements();
     }
 
     //==============================================================================
 
     /**
-     * Compute the selection area based on the initial start point and the current mouse position.
+     * Start the selection process for mouse events.
      *
-     * @param event - used to retrieve current mouse coordinates
+     * @param event - used to define th initial coordinates of the selection area.
      */
-    private computeSelectionRectangle(event: MouseEvent) {
+    private onMouseDown(event: MouseEvent) {
+        event.preventDefault();
+
+        const eventLocation: Point = { x: event.clientX, y: event.clientY };
+
+        this.startSelection(eventLocation);
+    }
+
+    /**
+     * Handles changes of the selection area by mouse moves.
+     */
+    private onMouseMove(event: MouseEvent) {
+        event.preventDefault();
+
+        const eventLocation: Point = { x: event.clientX, y: event.clientY };
+
+        this.onMove(eventLocation);
+    }
+
+    /**
+     * Handles end of selection for mouse events.
+     *
+     * @param _unused - unused but required to match callback signature
+     */
+    private onMouseUp(_unused: MouseEvent) {
+        this.endSelection();
+    }
+
+    //==============================================================================
+
+    /**
+     * Start the selection process for mouse events.
+     *
+     * @param event - used to define th initial coordinates of the selection area.
+     */
+    private onTouchStart(event: TouchEvent) {
+        // needed to prevent scrolling
+        event.preventDefault();
+
+        const touchEvent = event.changedTouches[0];
+        const eventLocation: Point = { x: touchEvent.pageX, y: touchEvent.pageY };
+
+        this.startSelection(eventLocation);
+    }
+
+    /**
+     * Handles changes of the selection area by touch moves.
+     */
+    private onTouchMove(event: TouchEvent) {
+        // needed to prevent scrolling
+        event.preventDefault();
+
+        const touchEvent = event.changedTouches[0];
+        const eventLocation: Point = { x: touchEvent.pageX, y: touchEvent.pageY };
+
+        this.onMove(eventLocation);
+    }
+
+    /**
+     * Handles end of selection for touch events.
+     *
+     * @param _unused - unused but required to match callback signature
+     */
+    private onTouchEnd(_unused: TouchEvent) {
+        this.endSelection();
+    }
+
+    /**
+     * Handles cancel of selection for touch events.
+     *
+     * @param _unused - unused but required to match callback signature
+     */
+    private onTouchCancel(_unused: TouchEvent) {
+        this.cleanupSelection();
+    }
+
+    //==============================================================================
+
+    /**
+     * Compute the selection area based on the initial start point and the current
+     * mouse / touch position.
+     *
+     * @param eventLocation - the current mouse / touch coordinates
+     */
+    private computeSelectionRectangle(eventLocation: Point) {
         const selectableRoot = this.getSelectableRoot();
         const selectableRect = selectableRoot.getBoundingClientRect();
 
-        const x = limitToRange(selectableRect.left, selectableRect.right, event.clientX);
-        const y = limitToRange(selectableRect.top, selectableRect.bottom, event.clientY);
+        const x = limitToRange(selectableRect.left, selectableRect.right, eventLocation.x);
+        const y = limitToRange(selectableRect.top, selectableRect.bottom, eventLocation.y);
 
         // mouse / touch is LEFT of starting point
         if (x < this.selectionStartPoint.x) {
