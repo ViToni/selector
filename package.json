@@ -1,7 +1,7 @@
 {
   "name": "@vitoni/selector",
   "description": "A tiny DIV based selector supporting mouse and touch written in TypeScript",
-  "version": "0.4.0",
+  "version": "1.0.0",
   "type": "module",
   "private": false,
   "files": [
