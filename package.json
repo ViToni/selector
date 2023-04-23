@@ -1,7 +1,7 @@
 {
   "name": "@vitoni/selector",
   "description": "A tiny DIV based selector supporting mouse and touch written in TypeScript",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "private": false,
   "files": [
@@ -23,6 +23,7 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:host": "vite --host",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --ignore-path .gitignore",
