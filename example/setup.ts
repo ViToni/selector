@@ -15,6 +15,14 @@ function handleSelected(selectedElements: HTMLElement[], selectionMode: Selectio
     });
 }
 
+function onClick(element: HTMLElement) {
+    if (element.classList.contains(selectectedClass)) {
+        element.classList.remove(selectectedClass);
+    } else {
+        element.classList.add(selectectedClass);
+    }
+}
+
 //==============================================================================
 
 function setupArea(areaId: string) {
@@ -33,7 +41,8 @@ function setupArea(areaId: string) {
             selectorClass: [
                 DEFAULTS.SELECTOR_CLASS,
                 areaId
-            ]
+            ],
+            onClick
         }
     );
 

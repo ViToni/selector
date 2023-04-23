@@ -85,6 +85,32 @@ A tiny DIV based selector supporting mouse and touch written in TypeScript.
 
 * The `selectablesRootSelector` allows to restrict the selection to the area identified by the selector.
 
+### Allow selection of single elements by clicking
+
+```typescript
+    ...
+
+    // allows changes on single elements without selection / changing the selection mode
+    function onClick(element: HTMLElement) {
+        if (element.classList.contains(selectectedClass)) {
+            element.classList.remove(selectectedClass);
+        } else {
+            element.classList.add(selectectedClass);
+        }
+    }
+
+    const selector = new Selector(
+        selectableElementsSelector,
+        handleSelected,
+        {
+            onClick
+        }
+    );
+
+    ...
+```
+
+
 ### Example code
 
 The example code in [setup.ts](example/setup.ts) shows how all these work together and also shows usage of multiple selection areas.

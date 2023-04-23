@@ -87,7 +87,8 @@ interface OptionalParameters {
     markAddSelectedClass: string,
     markRemoveSelectedClass: string,
     selectablesRootSelector: string,
-    selectionMatchMode: SelectionMatchMode
+    selectionMatchMode: SelectionMatchMode,
+    onClick?: (element: HTMLElement) => void
 }
 
 //==============================================================================
@@ -143,6 +144,17 @@ export class Selector {
     private readonly onSelection: (selectedElements: HTMLElement[], selectionMode: SelectionMode) => void;
 
     /**
+     * Callback to be executed when clicking elements.
+     */
+    private readonly onClick?: (element: HTMLElement) => void;
+
+    /**
+     * Selectable element on which the selection started (mouse down / touch down event).
+     * Used to keep track of the initial element in case the selection is a "fuzzy" click.
+     */
+    private clickedElement: HTMLElement | undefined = undefined;
+
+    /**
      * Flag to indicate whether the selection DIV has been created
      * and the event handlers have been registered.
      */
@@ -186,7 +198,8 @@ export class Selector {
             markAddSelectedClass: DEFAULTS.MARK_ADD_SELECTED_CLASS,
             markRemoveSelectedClass: DEFAULTS.MARK_REMOVE_SELECTED_CLASS,
             selectablesRootSelector: DEFAULTS.SELECTABLES_ROOT_SELECTOR,
-            selectionMatchMode: SelectionMatchMode.PARTIAL_COVER
+            selectionMatchMode: SelectionMatchMode.PARTIAL_COVER,
+            onClick: undefined // don't handle clicks without user configuration
         };
 
         const optionsWithDefaultValues: OptionalParameters = {
@@ -198,6 +211,7 @@ export class Selector {
         this.selectableElementsSelector = selectableElementsSelector;
 
         this.onSelection = onSelection;
+        this.onClick = optionsWithDefaultValues.onClick;
 
         this.selectorUUID = optionsWithDefaultValues.selectorUUID;
         this.selectorClassList = Array.isArray(optionsWithDefaultValues.selectorClass)
@@ -304,6 +318,18 @@ export class Selector {
         this.selectionRectangle.left = event.clientX;
         this.selectionRectangle.top = event.clientY;
         this.selectionRectangle.bottom = event.clientY;
+
+        // only checking for clicks if a click callback was configured
+        if (this.onClick) {
+            const eventLocation: Point = { x: event.clientX, y: event.clientY };
+
+            const clickedElements = this.getSelectableElements().filter(
+                (element) => withinElementBounds(eventLocation, element)
+            );
+            if (clickedElements.length == 1) {
+                this.clickedElement = clickedElements[0];
+            }
+        }
     }
 
     /**
@@ -322,6 +348,22 @@ export class Selector {
         this.computeSelectionRectangle(event);
         this.showSelectionRectangle();
 
+        // a clickedElement implies:
+        // - the user configured an onClick callback
+        // - the selection started a from within this element
+        // - the last position was within this element's bounds
+        if (this.clickedElement) {
+            const eventLocation: Point = { x: event.clientX, y: event.clientY };
+
+            // maybe the current location is outside of the element the selection started in
+            if (!withinElementBounds(eventLocation, this.clickedElement)) {
+                // discard the element for click when the location is outside the element
+                // (When the user shrinks the selection area again to be in the initial element
+                // it wouldn't be a click anymore.)
+                this.clickedElement = undefined;
+            }
+        }
+
         this.markSelectedElements();
     }
 
@@ -334,7 +376,7 @@ export class Selector {
         if (this.selectionStarted) {
             this.selectionStarted = false;
 
-            // fail safe since we execute a user provided function
+            // fail safe since we execute user provided functions
             try {
                 this.handleSelected();
             } finally {
@@ -342,6 +384,8 @@ export class Selector {
                 this.resetSelectionRectangle();
 
                 this.unmarkSelectedElements();
+
+                this.clickedElement = undefined;
             }
         }
     }
@@ -525,10 +569,15 @@ export class Selector {
     //==============================================================================
 
     /**
-     * Delegates the selected elements to the user provided callback.
+     * Delegates the clicked element / selected elements to the user provided callbacks.
      */
     private handleSelected() {
-        this.onSelection(this.getSelectedElements(), this.selectionMode);
+        // only one element to handle
+        if (this.clickedElement) {
+            this.onClick?.(this.clickedElement);
+        } else {
+            this.onSelection(this.getSelectedElements(), this.selectionMode);
+        }
     }
 
     //==============================================================================
@@ -574,6 +623,25 @@ function selectionHasNoArea(rectangle: Rectangle): boolean {
     return (
         rectangle.left == rectangle.right ||
         rectangle.top == rectangle.bottom
+    );
+}
+
+/**
+ * Checks if a location is within the bounds of a given element.
+ *
+ * @param location - to be checked againt the element
+ * @param element - holding the bounds to be checked against
+ */
+function withinElementBounds(location: Point, element: HTMLElement): boolean {
+    const elementRect = element.getBoundingClientRect();
+
+    if (elementHasNoArea(elementRect)) {
+        return false;
+    }
+
+    return (
+        elementRect.left <= location.x && location.x <= elementRect.right &&
+        elementRect.top <= location.y && location.y <= elementRect.bottom
     );
 }
 
