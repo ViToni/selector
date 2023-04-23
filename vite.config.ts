@@ -1,13 +1,16 @@
-import { resolve } from "path";
 import { defineConfig } from "vite";
-import dts from "vite-plugin-dts";
 import typescript from "@rollup/plugin-typescript";
+
+import * as path from "path";
+import { existsSync, readdirSync, lstatSync, rmdirSync, unlinkSync } from "fs";
+
+const projectRootDir = path.resolve(__dirname);
+const resolvePath = (str: string) => path.resolve(projectRootDir, str);
+
+emptyDir(resolvePath("dist"));
 
 export default defineConfig({
     plugins: [
-        dts({
-            outputDir: ["dist"]
-        }),
         typescript()
     ],
     build: {
@@ -15,8 +18,8 @@ export default defineConfig({
         emptyOutDir: true,
         lib: {
             entry: {
-                main: resolve(__dirname, "src/main.ts"),
-                randomUUID: resolve(__dirname, "src/randomUUID.ts")
+                main: resolvePath("src/main.ts"),
+                randomUUID: resolvePath("src/randomUUID.ts")
             },
             formats: ["es", "cjs"]
         },
@@ -27,3 +30,25 @@ export default defineConfig({
         }
     }
 });
+
+//==============================================================================
+
+function emptyDir(dir: string): void {
+    if (!existsSync(dir)) {
+        return;
+    }
+
+    for (const file of readdirSync(dir)) {
+        const abs = path.resolve(dir, file);
+
+        // baseline is Node 12 so can't use rmSync
+        if (lstatSync(abs).isDirectory()) {
+            emptyDir(abs);
+            rmdirSync(abs);
+        } else {
+            unlinkSync(abs);
+        }
+    }
+}
+
+//==============================================================================
