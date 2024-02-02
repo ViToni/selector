@@ -1,7 +1,7 @@
 {
   "name": "@vitoni/selector",
   "description": "A tiny DIV based selector supporting mouse and touch written in TypeScript",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "type": "module",
   "private": false,
   "files": [
@@ -55,10 +55,10 @@
     "@types/node": "^20.3.1",
     "@typescript-eslint/eslint-plugin": "^6.2.0",
     "@typescript-eslint/parser": "^6.2.0",
-    "eslint": "^8.45.0",
-    "eslint-plugin-import": "^2.27.5",
+    "eslint": "^8.56.0",
+    "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-tsdoc": "^0.2.17",
     "typescript": "^5.1.6",
-    "vite": "^4.4.7"
+    "vite": "^5.0.12"
   }
 }
